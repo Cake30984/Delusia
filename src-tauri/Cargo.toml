@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "デルシア（Delusia）— AI が書き進める物語を読む BYOK アプリのデスクトップ版"
 authors = ["tokatokage"]
 license = "MIT"
-repository = "https://github.com/Cake30984/AIStoryTellingUI"
+repository = "https://github.com/Cake30984/Delusia"
 edition = "2021"
 rust-version = "1.77.2"
 

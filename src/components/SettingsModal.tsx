@@ -433,7 +433,7 @@ export function SettingsBody() {
             デルシア
             <br />
             <a
-              href="https://github.com/Cake30984/AIStoryTellingUI/blob/main/docs/利用規約とプライバシー.md"
+              href="https://github.com/Cake30984/Delusia/blob/main/docs/利用規約とプライバシー.md"
               target="_blank"
               rel="noreferrer"
               style={{ color: 'var(--accent)' }}
