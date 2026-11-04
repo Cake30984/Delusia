@@ -13,5 +13,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/**/__tests__/**/*.test.ts'],
+    // CSS は既定で空として読まれる。tokens.css だけは用意した色の値の一致を確かめるため中身を通す（P9）
+    css: { include: [/tokens\.css/] },
   },
 })

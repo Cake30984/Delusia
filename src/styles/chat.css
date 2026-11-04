@@ -87,6 +87,7 @@
 }
 
 .bubble .content {
+  font-family: var(--font-prose);
   white-space: pre-wrap;
   word-break: break-word;
   font-size: var(--font-size-prose);
@@ -295,7 +296,7 @@
 .scene-summary-regen:hover:not(:disabled) {
   opacity: 1;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 .scene-summary-regen:disabled {
   opacity: 0.3;
@@ -356,6 +357,7 @@
 
 /* ---------- 小説形式の表示 ---------- */
 .prose-block {
+  font-family: var(--font-prose);
   white-space: pre-wrap;
   word-break: break-word;
   margin-bottom: 16px;
@@ -523,6 +525,7 @@
   cursor: default;
 }
 .interlude-body {
+  font-family: var(--font-prose);
   white-space: pre-wrap;
   word-break: break-word;
   line-height: var(--line-height-prose);

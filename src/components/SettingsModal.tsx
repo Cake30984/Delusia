@@ -14,6 +14,8 @@ import { appConfirm } from '../lib/dialogs'
 import type { LlmRequestKind, Provider, UsageRecord } from '../types'
 import { Icon } from './icons'
 import HelpDetails from './HelpDetails'
+import FontLicenses from './FontLicenses'
+import { TempAppearanceSettings } from './TempAppearanceSettings'
 import { defaultMaxTokensMode, type MaxTokensMode, type ReasoningLevel } from '../lib/callTuning'
 
 /** モデル使用状況（計測。PC0）の種別表示順・ラベル */
@@ -166,6 +168,11 @@ export function SettingsBody() {
 
   return (
     <>
+          {/* 明るさ・色・本文の書体の仮の切り替え（P9 段1。段8で設定を作り直すときに外す） */}
+          <TempAppearanceSettings />
+
+          <hr className="divider" />
+
           {/* 接続先（プロバイダ）管理 */}
           <div className="field">
             <label>接続先（API プロバイダ）</label>
@@ -453,6 +460,9 @@ export function SettingsBody() {
               利用規約とプライバシー
             </a>
           </p>
+          <div style={{ maxWidth: 640, margin: '0 auto' }}>
+            <FontLicenses />
+          </div>
 
           {showDefaultPicker && (
             <ModelPicker

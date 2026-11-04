@@ -756,6 +756,53 @@ export interface UiPrefs {
   dialogueTint: boolean
   /** 没入モード（サイドバー・ドックを隠し topbar をホバー表示に） */
   immersive: boolean
+  /** 明るさ（P9）。system は端末の設定（prefers-color-scheme）に従う */
+  appearance: Appearance
+  /** 色（P9）。用意した色の id（`PRESET_PALETTE_IDS`）か、自分で作った色の id */
+  palette: string
+  /** 自分で作った色（P9。いくつでも） */
+  customPalettes: CustomPalette[]
+  /** 物語の本文の書体（P9。画面の文字には効かない） */
+  proseFont: ProseFont
+}
+
+/** 明るさの設定（P9） */
+export type Appearance = 'light' | 'dark' | 'system'
+export const APPEARANCES: Appearance[] = ['light', 'dark', 'system']
+
+/** 用意した色の id（P9。藍・生成り・若草・桜・墨）。値は `lib/palette.ts` と `styles/tokens.css` */
+export const PRESET_PALETTE_IDS = ['ai', 'kinari', 'wakakusa', 'sakura', 'sumi'] as const
+export type PresetPaletteId = (typeof PRESET_PALETTE_IDS)[number]
+
+/** 本文の書体（P9）。gothic=M PLUS 2・mincho=しっぽり明朝・maru=Zen Maru Gothic・ud=BIZ UDPゴシック・system=端末の書体 */
+export const PROSE_FONTS = ['gothic', 'mincho', 'maru', 'ud', 'system'] as const
+export type ProseFont = (typeof PROSE_FONTS)[number]
+
+/** 自分の色で上書きできる（自動で決まる）色（P9）。`onAccent` は CSS の `--on-accent` */
+export interface PaletteOverrides {
+  sub?: string
+  line?: string
+  edge?: string
+  tint?: string
+  onAccent?: string
+  danger?: string
+}
+
+/** 自分の色の明るい側・暗い側のどちらか一方（P9）。3色は `#RRGGBB` */
+export interface CustomPaletteSide {
+  bg: string
+  ink: string
+  accent: string
+  /** 「細かく決める」で上書きした色。無い項目は 3色から自動で決める */
+  overrides?: PaletteOverrides
+}
+
+/** 利用者が作った色（P9） */
+export interface CustomPalette {
+  id: string
+  name: string
+  light: CustomPaletteSide
+  dark: CustomPaletteSide
 }
 
 export const DEFAULT_UI: UiPrefs = {
@@ -770,6 +817,10 @@ export const DEFAULT_UI: UiPrefs = {
   speakerIconSize: 22,
   dialogueTint: true,
   immersive: false,
+  appearance: 'system',
+  palette: 'ai',
+  customPalettes: [],
+  proseFont: 'gothic',
 }
 
 /** リーダー設定の可変範囲（ReaderSettings のスライダー・数値入力と共有。F2） */
@@ -811,6 +862,14 @@ export function normalizeUiPrefs(raw: unknown): UiPrefs {
   // 旧データにはキーが無いので既定 22 で補われる（clamp が非数値を既定値へ落とす）
   const speakerIconSize = clamp(r.speakerIconSize, 16, 48, 22)
   const validTabs: DockTab[] = ['status', 'discovery', 'gallery', 'branch', 'jobs']
+  const customPalettes = normalizeCustomPalettes(r.customPalettes)
+  // 消した自分の色・知らない id を指していたら既定（藍）へ戻す
+  const palette =
+    typeof r.palette === 'string' &&
+    ((PRESET_PALETTE_IDS as readonly string[]).includes(r.palette) ||
+      customPalettes.some((c) => c.id === r.palette))
+      ? r.palette
+      : DEFAULT_UI.palette
   return {
     dockTab: validTabs.includes(r.dockTab as DockTab) ? (r.dockTab as DockTab) : null,
     dockWidth: clamp(r.dockWidth, 300, 560, 360),
@@ -820,7 +879,57 @@ export function normalizeUiPrefs(raw: unknown): UiPrefs {
     speakerIconSize,
     dialogueTint: r.dialogueTint !== false,
     immersive: r.immersive === true,
+    appearance: APPEARANCES.includes(r.appearance as Appearance)
+      ? (r.appearance as Appearance)
+      : DEFAULT_UI.appearance,
+    palette,
+    customPalettes,
+    proseFont: (PROSE_FONTS as readonly string[]).includes(r.proseFont as string)
+      ? (r.proseFont as ProseFont)
+      : DEFAULT_UI.proseFont,
   }
+}
+
+const HEX6 = /^#[0-9a-fA-F]{6}$/
+
+/** `#RRGGBB` なら大文字へそろえて返す。それ以外は null */
+function normHex(v: unknown): string | null {
+  return typeof v === 'string' && HEX6.test(v.trim()) ? v.trim().toUpperCase() : null
+}
+
+function normalizeCustomSide(raw: unknown): CustomPaletteSide | null {
+  const r = (raw ?? {}) as Record<string, unknown>
+  const bg = normHex(r.bg)
+  const ink = normHex(r.ink)
+  const accent = normHex(r.accent)
+  if (!bg || !ink || !accent) return null
+  const side: CustomPaletteSide = { bg, ink, accent }
+  const o = (r.overrides ?? {}) as Record<string, unknown>
+  const overrides: PaletteOverrides = {}
+  for (const k of ['sub', 'line', 'edge', 'tint', 'onAccent', 'danger'] as const) {
+    const h = normHex(o[k])
+    if (h) overrides[k] = h
+  }
+  if (Object.keys(overrides).length > 0) side.overrides = overrides
+  return side
+}
+
+/** 自分の色の一覧を正規化する。3色が欠けた・壊れた項目と、id の重複（後ろ側）は落とす */
+function normalizeCustomPalettes(raw: unknown): CustomPalette[] {
+  if (!Array.isArray(raw)) return []
+  const out: CustomPalette[] = []
+  for (const item of raw) {
+    const r = (item ?? {}) as Record<string, unknown>
+    if (typeof r.id !== 'string' || r.id === '') continue
+    // 用意した色の id と重なると切り替えで区別できないので受け付けない
+    if ((PRESET_PALETTE_IDS as readonly string[]).includes(r.id)) continue
+    if (out.some((c) => c.id === r.id)) continue
+    const light = normalizeCustomSide(r.light)
+    const dark = normalizeCustomSide(r.dark)
+    if (!light || !dark) continue
+    out.push({ id: r.id, name: typeof r.name === 'string' ? r.name : '', light, dark })
+  }
+  return out
 }
 
 /**

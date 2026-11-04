@@ -21,6 +21,8 @@ import { completeOpenRouterOAuthRedirect, pendingOAuthRedirect } from './lib/oau
 import { defaultOpenRouterProvider, isProviderUsable } from './lib/providers'
 import { schemaErrorMessage } from './lib/schema'
 import { Icon, type IconName } from './components/icons'
+import { customPaletteCssVars, PALETTE_CSS_VARS } from './lib/palette'
+import { loadProseFont } from './lib/proseFonts'
 
 // 積層トーストの1件。autoCloseMs があれば一定時間後に自動で onClose を呼ぶ（UI-0）
 function ToastItem({
@@ -213,6 +215,36 @@ export default function App() {
     if (ui.dialogueTint) root.removeProperty('--dialogue')
     else root.setProperty('--dialogue', 'var(--text)')
   }, [ui.fontSize, ui.lineHeight, ui.contentWidth, ui.speakerIconSize, ui.dialogueTint])
+
+  // 色・明るさ・本文の書体を <html> の属性へ（P9）。値は tokens.css が属性で当てる。
+  // 自分の色だけは --l-*／--d-* を style へ直接入れる（style の方が data-palette の値より強い）
+  useEffect(() => {
+    const el = document.documentElement
+    const custom = ui.customPalettes.find((c) => c.id === ui.palette)
+    el.dataset.palette = custom ? 'custom' : ui.palette
+    el.dataset.appearance = ui.appearance
+    el.dataset.proseFont = ui.proseFont
+    loadProseFont(ui.proseFont)
+    const vars = custom ? customPaletteCssVars(custom) : {}
+    for (const prefix of ['l', 'd']) {
+      for (const name of Object.values(PALETTE_CSS_VARS)) {
+        const key = `--${prefix}-${name}`
+        if (vars[key]) el.style.setProperty(key, vars[key])
+        else el.style.removeProperty(key)
+      }
+    }
+  }, [ui.palette, ui.appearance, ui.proseFont, ui.customPalettes])
+
+  // ブラウザの上端の色（theme-color）を背景色に合わせる。「端末に合わせる」は端末の切り替えにも追従する
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="theme-color"]')
+    if (!meta) return
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    const apply = () => meta.setAttribute('content', getComputedStyle(document.documentElement).getPropertyValue('--bg').trim())
+    apply()
+    mq.addEventListener('change', apply)
+    return () => mq.removeEventListener('change', apply)
+  }, [ui.palette, ui.appearance, ui.customPalettes])
 
   // グローバルショートカット（UI-7）: Ctrl+K/1/2/3/G/.。没入モードの Ctrl+. トグルもここに集約（旧 UI-4 実装を移管）
   useGlobalShortcuts(() => setPaletteOpen((v) => !v))

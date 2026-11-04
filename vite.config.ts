@@ -52,8 +52,10 @@ function swAssets(): Plugin {
       outDir = config.build.outDir
     },
     generateBundle(_options, bundle) {
+      // 書体（woff2）は先に取らない。約 15MB あるうえ、表示に使った範囲だけ読めば足りる
+      // （読んだものは fetch ハンドラがハッシュ付きの素材として保存する）
       assets = Object.keys(bundle)
-        .filter((name) => name !== 'index.html')
+        .filter((name) => name !== 'index.html' && !/\.woff2?$/.test(name))
         .map((name) => `./${name}`)
     },
     // public/ のコピーもバンドルの書き出しも終わったあとに差し替える
@@ -76,6 +78,23 @@ function swAssets(): Plugin {
         swPath,
         code.replace('__BUILD_ID__', buildId).replace('__ASSETS__', JSON.stringify(assets)),
       )
+    },
+  }
+}
+
+/**
+ * 同梱する書体（P9。`@fontsource/*`）の CSS から、古いブラウザ向けの woff の指定を外す。
+ * 外さないと woff2 と同じ数の woff もビルド成果物に入り、デスクトップ版のインストーラーが倍近く膨らむ。
+ * 対象のブラウザ（WebView2・現行の Safari／Chrome／Firefox）はどれも woff2 を読める。
+ */
+function fontsWoff2Only(): Plugin {
+  return {
+    name: 'delusia-fonts-woff2-only',
+    enforce: 'pre',
+    transform(code, id) {
+      // Vite の id は区切りが / にそろっている
+      if (!/\/@fontsource(-variable)?\/.+\.css$/.test(id)) return null
+      return { code: code.replace(/,\s*url\([^)]+\.woff\)\s*format\('woff'\)/g, ''), map: null }
     },
   }
 }
@@ -104,7 +123,7 @@ export default defineConfig({
    * Tauri 版は `tauri.localhost` の直下に置かれるので既定のまま（実機検証の条件を変えない）。
    */
   base: isTauri ? '/' : './',
-  plugins: [react(), cspMeta(), swAssets()],
+  plugins: [fontsWoff2Only(), react(), cspMeta(), swAssets()],
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
