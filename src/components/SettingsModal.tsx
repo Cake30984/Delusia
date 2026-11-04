@@ -14,6 +14,7 @@ import { appConfirm } from '../lib/dialogs'
 import type { LlmRequestKind, Provider, UsageRecord } from '../types'
 import { Icon } from './icons'
 import HelpDetails from './HelpDetails'
+import { defaultMaxTokensMode, type MaxTokensMode, type ReasoningLevel } from '../lib/callTuning'
 
 /** モデル使用状況（計測。PC0）の種別表示順・ラベル */
 const USAGE_KIND_ORDER: LlmRequestKind[] = [
@@ -347,6 +348,17 @@ export function SettingsBody() {
             </div>
           </div>
 
+          {/* 呼び出しの種類ごとの推論・出力上限（callTuning.ts） */}
+          <div className="field">
+            <label>AI 呼び出しの詳細設定</label>
+            <div className="desc">
+              呼び出しの種類ごとに、推論の量と出力の上限を変えられます。途中で切れて失敗するときに調整してください。
+            </div>
+            <HelpDetails summary="種類ごとに設定する">
+              <CallTuningTable />
+            </HelpDetails>
+          </div>
+
           <hr className="divider" />
 
           {/* 画像生成の接続先 */}
@@ -449,6 +461,80 @@ export function SettingsBody() {
               onClose={() => setShowDefaultPicker(false)}
             />
           )}
+    </>
+  )
+}
+
+const REASONING_OPTIONS: { value: ReasoningLevel | ''; label: string }[] = [
+  { value: '', label: 'おまかせ' },
+  { value: 'off', label: 'オフ' },
+  { value: 'low', label: '低' },
+  { value: 'medium', label: '中' },
+  { value: 'high', label: '高' },
+]
+
+/** 種類ごとの推論・出力上限の表。未設定の項目は既定値（`callTuning.ts`）を選択済みとして見せる */
+function CallTuningTable() {
+  const callTuning = useStore((st) => st.callTuning)
+  const { setCallTuning } = storeActions()
+  return (
+    <>
+      <table className="usage-table call-tuning-table">
+        <thead>
+          <tr>
+            <th>種別</th>
+            <th>推論</th>
+            <th>出力の上限</th>
+          </tr>
+        </thead>
+        <tbody>
+          {USAGE_KIND_ORDER.map((kind) => {
+            const t = callTuning?.[kind]
+            const mode = t?.maxTokens ?? defaultMaxTokensMode(kind)
+            return (
+              <tr key={kind}>
+                <td>{USAGE_KIND_LABELS[kind]}</td>
+                <td>
+                  <select
+                    aria-label={`${USAGE_KIND_LABELS[kind]}の推論`}
+                    value={t?.reasoning ?? ''}
+                    onChange={(e) =>
+                      setCallTuning(kind, { reasoning: (e.target.value || undefined) as ReasoningLevel | undefined })
+                    }
+                  >
+                    {REASONING_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+                <td>
+                  <select
+                    aria-label={`${USAGE_KIND_LABELS[kind]}の出力の上限`}
+                    value={mode}
+                    onChange={(e) => {
+                      const v = e.target.value as MaxTokensMode
+                      // 既定と同じ値は保存しない（既定が変わったときに追従させる）
+                      setCallTuning(kind, { maxTokens: v === defaultMaxTokensMode(kind) ? undefined : v })
+                    }}
+                  >
+                    <option value="unlimited">上限なし</option>
+                    <option value="app">{kind === 'main' ? '物語ごとの設定' : 'アプリの既定'}</option>
+                  </select>
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+      <div className="desc" style={{ marginTop: 10 }}>
+        推論は OpenRouter 経由の呼び出しにだけ効きます。「おまかせ」はモデルの既定のままです。
+        DeepSeek V4 のように低・中・高の違いが効かず「オフ」だけが効くモデルもあります。
+        推論するモデルは推論の分も出力の上限に数えられるため、上限を付けると本文が途中で切れやすくなります。
+        「上限なし」はモデル側の最大まで出力できます（多くの場合は書き終われば止まります）。
+        本編の「物語ごとの設定」は、物語の設定画面の「最大トークン」を使います。
+      </div>
     </>
   )
 }

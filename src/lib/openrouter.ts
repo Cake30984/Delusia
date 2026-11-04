@@ -2,6 +2,7 @@ import type { OpenRouterModel, Provider, Role } from '../types'
 import { appFetch } from './platform'
 import { isAnthropicEndpoint, isLocalEndpoint } from './providers'
 import { weakerJsonMode, type JsonMode, type JsonSchemaSpec } from './jsonSchemas'
+import { reasoningParam, type ReasoningLevel } from './callTuning'
 import { estimateTokens } from './tokens'
 
 /** モードの強さ（比較用） */
@@ -24,7 +25,16 @@ export interface ChatParams {
   model: string
   messages: ChatMessage[]
   temperature?: number
+  /** 未指定なら `max_tokens` を送らない＝上限なし（`callTuning.ts`） */
   maxTokens?: number
+  /** 推論の量（OpenRouter のときだけ送る。未指定＝モデルにおまかせ） */
+  reasoning?: ReasoningLevel
+  /**
+   * そのモデルが申告する対応パラメータ（`OpenRouterModel.supported_parameters`。一覧未取得なら未指定）。
+   * 申告に無い `temperature`／`reasoning` は送らない——スキーマ強制時の `require_parameters` で
+   * 上流が全部弾かれ 404 になるため（実測: GPT-5.6 Terra・Claude Sonnet 5 は temperature 非対応）。
+   */
+  supportedParameters?: string[]
   signal?: AbortSignal
   /** 出力を固定するのに使うスキーマ（`jsonMode==='schema'` のときだけ使う。`jsonSchemas.ts`） */
   jsonSchema?: JsonSchemaSpec
@@ -196,6 +206,10 @@ export async function streamChat(
 
   // プロンプトキャッシュのブレークポイント付与（Anthropic 系のみ。それ以外は同一参照で素通し）
   const outgoing = withCacheControl(params.messages, params.provider, params.model)
+  const supported = params.supportedParameters
+  const sendTemperature = !supported?.length || supported.includes('temperature')
+  const reasoning =
+    params.provider.kind === 'openrouter' ? reasoningParam(params.reasoning, supported) : undefined
 
   const send = (m: JsonMode) =>
     appFetch(`${params.provider.baseUrl}/chat/completions`, {
@@ -205,8 +219,10 @@ export async function streamChat(
       body: JSON.stringify({
         model: params.model,
         messages: outgoing,
-        temperature: params.temperature,
+        ...(sendTemperature ? { temperature: params.temperature } : {}),
+        // undefined は JSON.stringify で落ちる＝上限なし
         max_tokens: params.maxTokens,
+        ...(reasoning ? { reasoning } : {}),
         stream: true,
         // OpenRouter は無くても usage を返すため送らない。汎用 OpenAI 互換サーバのみ明示的に要求する
         // （現行の OpenRouter リクエストを1バイトも変えないため。未知フィールドで 400 を返す互換サーバ対策）。

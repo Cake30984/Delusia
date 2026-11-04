@@ -49,6 +49,7 @@ React 18 + TypeScript(strict) + Vite / zustand（`persist`）/ Tauri 2（`plugin
 - `prompts.ts` — 本編の3層組み立て（`buildSystemPrompt`/`buildMessages`/`selectRawScenes`）と裏方プロンプト全部（選択肢・レビュー A/B/T・次シーン候補・結末提案・エピローグ・幕間・キャラ起案・画像起案・物語の起案）。進行マーカーは `MARKER_PROMPTS`/`isMarkerContent`、本文判定は `isStoryText`/`sceneCharsOf`
 - `jsonSchemas.ts` — 裏方 LLM の JSON スキーマ（`reviewSchema(part)`/`CHOICES_SCHEMA`/`ENDING_PROPOSALS_SCHEMA`/`NEXT_SCENE_SCHEMA`/`IMAGE_DRAFT_SCHEMA`/`CHARACTER_DRAFT_SCHEMA`/`KICKOFF_SCHEMA`）と `jsonModeFor(model, models)`（OpenRouter の `supported_parameters` 優先・無ければ名前で推定）
 - `kickoff.ts` — 一行からの起案結果を `World`/`Character` へ詰める純関数（`normalizeKickoff`・`KICKOFF_TAG`）。件数の上下限・空欄・名前の空白は**受け側のここで**吸収する（スキーマでは縛らない）
+- `callTuning.ts` — 呼び出しの種類（`LlmRequestKind`）ごとの推論（`ReasoningLevel`＝未設定はおまかせ／off／low／medium／high）と出力の上限（`MaxTokensMode`＝`unlimited`／`app`）。**既定は本編だけ `app`（物語ごとの最大トークン）・裏方は `unlimited`（`max_tokens` を送らない）**。呼び出し側は `callTuningFor(kind, アプリの上限, provider, model)`（store）を `streamChat` の引数へ展開する
 - `json.ts` — `extractJson`（修復フォールバック付き）／`partialString`（ストリーミング途中の JSON から文字列値を読む）
 - `names.ts` — `matchCharacterByName`（名前解決の唯一の窓口。レビューの発見キャラが既知の人物を誤検出しないため）／`NARRATION_NAMES`。本文は素のテキスト＝行タグのパーサは無い（構造化出力は 2026-09-21 に撤去。旧データの `@名前「」` は `schema.ts` の `flattenSpeakerTags` が移行で剥がす）
 - `lorebook.ts` — ロアを `alwaysOn`（system）とキーワード一致（深さ3・直近6件窓）に分ける
@@ -82,7 +83,7 @@ React 18 + TypeScript(strict) + Vite / zustand（`persist`）/ Tauri 2（`plugin
 - **SessionOverlay** — `lore`（発見ロア）／`characterDevelopments`。素材を汚さないための上乗せ。本編には素材＋overlay の実効ビュー（`effectiveWorld`/`effectiveCharacter`）で注入。`promoteOverlay*` で素材へ **move**
 - **Scene** — `title`/`note`（時・場所・居る人物）/`summary`/`timeLabel?`/`foreground?`（突き合わせ済みの一文）/`illustrations?`/`interludes?`/`endedAt?`
 - **Message** — `role`/`characterId?`/`sceneId?`/`content`/`choices?`/`truncated?`/`pending?`/`kind?: 'directive'`（書き手への指示。判定は `isDirective`）
-- **AppState 直下（Session の外に置くもの）** — `branchTrees: Record<sessionId, BranchTree>`／`sessionImageLogs`／`cassettes: Cassette[]`／`ui: UiPrefs`／`defaultModelRef`／`favoriteModels`／`lastImageProviderId`／`lastDraftModel`／`starterSeeded`（既定コンテンツを一度入れたか）／`storageNoticeSeen`（ブラウザ版の保存先案内を出したか。P5）。**`branchTrees`・`sessionImageLogs` を Session に入れない**（スナップショットに含まれて再帰肥大・復元で巻き戻る）
+- **AppState 直下（Session の外に置くもの）** — `branchTrees: Record<sessionId, BranchTree>`／`sessionImageLogs`／`cassettes: Cassette[]`／`ui: UiPrefs`／`defaultModelRef`／`callTuning`（System の「AI 呼び出しの詳細設定」。エクスポート除外）／`favoriteModels`／`lastImageProviderId`／`lastDraftModel`／`starterSeeded`（既定コンテンツを一度入れたか）／`storageNoticeSeen`（ブラウザ版の保存先案内を出したか。P5）。**`branchTrees`・`sessionImageLogs` を Session に入れない**（スナップショットに含まれて再帰肥大・復元で巻き戻る）
 - **非永続（`partialize` 除外）** — `imageJobs`/`imageJobToasts`/`reviewProgress`/`sceneReview`/`endingProposals`/`interludeReflection`/`characterDraftQueue`/`scrollTarget`/`usageLog`/`schemaError`/`modelsByProvider`/各 `is*` フラグ
 - **BranchNode/BranchTree** — `{id,parentId,kind:'action'|'scene',label,timeLabel?,createdAt,imageIds,bytes,ending?,star?,branchName?,anchorMessageId?}`／`{currentId,nodes}`。実体（gzip した Session）は `CheckpointStore`
 - **Cassette** — `{id,title,description,coverImageId?,session(開始状態),createdAt}`。棚に置く配布単位。`playCassette` が新セッションへ複製し `originCassetteId` を刻む
@@ -185,6 +186,8 @@ React 18 + TypeScript(strict) + Vite / zustand（`persist`）/ Tauri 2（`plugin
 - `restoreCheckpoint` の passthrough を増やすときは「本文・進行と結合しているか」で判定。迷ったらスナップショット側
 - 分岐の自動削除は `subtreeHasProtection` を通す。`recordCheckpoint` 内では剪定しない
 - store 直管理のフィールド（`avatar.imageId` 等）を draft 全置換の保存で上書きしない
+
+- **`streamChat` を新しく呼ぶときは `maxTokens` を直書きせず `...callTuningFor(kind, 上限, provider, model)` を渡す。** 推論するモデルは推論トークンも `max_tokens` に数えられ、固定の上限だと JSON が途中で切れる（実測: DeepSeek V4 Flash の起案は上限 6000 で 4/4 失敗。`決定記録.md` §12）。`temperature`／`reasoning` は `supported_parameters` に無ければ送らない（`require_parameters` で 404 になる）
 
 **UI**
 - モーダルは `ModalShell`。ネイティブ `confirm`/`prompt` 禁止（`appConfirm`/`appPrompt`/`appChoices`）

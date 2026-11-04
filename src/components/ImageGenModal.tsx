@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { storeActions, useStore } from '../store'
+import { callTuningFor, storeActions, useStore } from '../store'
 import { streamChat } from '../lib/openrouter'
 import { parseModelRef, modelRefLabel, isProviderUsable } from '../lib/providers'
 import { extractJson } from '../lib/json'
@@ -162,7 +162,7 @@ export default function ImageGenModal({
             { role: 'user', content: draftContext.user },
           ],
           temperature: 0.7,
-          maxTokens: 4000,
+          ...callTuningFor('imageDraft', 4000, llm, model),
           // 対応モデルなら JSON を強制する（起案の取りこぼしを防ぐ）
           jsonSchema: imageDraftSchema(style),
           jsonMode: jsonModeFor(model, modelsByProvider[llm.id]),

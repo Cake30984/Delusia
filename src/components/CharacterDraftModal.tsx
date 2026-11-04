@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import {
+  callTuningFor,
   currentScene,
   knownSpeakersOf,
   newCharacter,
@@ -104,7 +105,7 @@ export default function CharacterDraftModal({ session, name, note, onClose }: Pr
               },
             ],
             temperature: 0.7,
-            maxTokens: 2000,
+            ...callTuningFor('characterDraft', 2000, provider, model),
             signal: controller.signal,
             jsonSchema: CHARACTER_DRAFT_SCHEMA,
             jsonMode: jsonModeFor(model, modelsByProvider[provider.id]),

@@ -94,6 +94,7 @@ beforeEach(() => {
     activeId: null,
     usageLog: [],
     defaultModelRef: 'p1::test/model',
+    callTuning: undefined,
   })
 })
 
@@ -178,6 +179,24 @@ describe('kickoffStory', () => {
     const res2 = await useStore.getState().kickoffStory('一行')
     expect(res2.error).toContain('502')
     expect(useStore.getState().sessions).toHaveLength(2)
+  })
+
+  it('既定は上限なし（max_tokens を送らない）。詳細設定の推論・上限が渡る', async () => {
+    await useStore.getState().kickoffStory('一行')
+    expect(seenParams[0].maxTokens).toBeUndefined()
+    expect(seenParams[0].reasoning).toBeUndefined()
+
+    useStore.getState().setCallTuning('kickoff', { reasoning: 'off', maxTokens: 'app' })
+    await useStore.getState().kickoffStory('一行')
+    expect(seenParams[1].maxTokens).toBe(6000)
+    expect(seenParams[1].reasoning).toBe('off')
+  })
+
+  it('出力の上限で切れたときは、その理由と直し方を出す', async () => {
+    streamImpl = async () => ({ text: '{"world":{"name":"途中', finishReason: 'length' })
+    const res = await useStore.getState().kickoffStory('一行')
+    expect(res.error).toContain('出力の上限')
+    expect(useStore.getState().sessions).toHaveLength(1)
   })
 
   it('中止したときは何も作らない', async () => {

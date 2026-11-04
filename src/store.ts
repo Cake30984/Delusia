@@ -16,6 +16,7 @@ import type {
   ExportBundle,
   ImageProvider,
   ImageQuality,
+  LlmRequestKind,
   LoreEntry,
   Message,
   MessageKind,
@@ -143,6 +144,7 @@ import {
   starterWorld,
 } from './starter'
 import { normalizeKickoff } from './lib/kickoff'
+import { resolveCallTuning, type CallTuning, type CallTuningMap } from './lib/callTuning'
 import { RECOMMENDED_MODELS } from './lib/recommendedModels'
 
 /** 既定モデル参照が無いときの素のモデル id。推奨リストの先頭（P7 A-1。`openrouter/auto` は使わない） */
@@ -771,6 +773,8 @@ interface AppState {
   lastDraftModel?: string
   /** 新規セッション・カセット開始時の既定モデル（"providerId::modelId"。System で設定。persist のみ・エクスポート除外） */
   defaultModelRef?: string
+  /** LLM 呼び出しの種類ごとの推論・出力上限（System の詳細設定。persist のみ・エクスポート除外。`callTuning.ts`） */
+  callTuning?: CallTuningMap
   favoriteModels: string[]
   characters: Character[]
   worlds: World[]
@@ -893,6 +897,8 @@ interface AppState {
   toggleFavorite: (modelId: string) => void
   /** 新規セッション・カセット開始時の既定モデルを設定する（空文字でクリア） */
   setDefaultModelRef: (ref: string) => void
+  /** 種類ごとの調整を部分更新する（値が `undefined` の項目は既定へ戻す） */
+  setCallTuning: (kind: LlmRequestKind, patch: CallTuning) => void
   /**
    * 起動時に1回呼ぶ（R3）。providers / imageProviders の apiKey を資格情報ストアの値で埋め直す
    * （Tauri のみ。旧 state.json 由来の平文キーの移行も兼ねる）。Web では no-op。
@@ -1417,6 +1423,7 @@ function partializeAppState(st: AppState) {
     lastImageProviderId: st.lastImageProviderId,
     lastDraftModel: st.lastDraftModel,
     defaultModelRef: st.defaultModelRef,
+    callTuning: st.callTuning,
     favoriteModels: st.favoriteModels,
     characters: st.characters,
     worlds: st.worlds,
@@ -1907,7 +1914,7 @@ export const useStore = create<AppState>()(
                 model: mainModel,
                 messages: buildRequestMessages(),
                 temperature: s.temperature,
-                maxTokens: s.maxTokens,
+                ...callTuningFor('main', s.maxTokens, provider, mainModel),
                 signal: controller.signal,
               },
               (chunk) => {
@@ -2016,7 +2023,7 @@ export const useStore = create<AppState>()(
                 model,
                 messages: msgs,
                 temperature: 0.5,
-                maxTokens: 600,
+                ...callTuningFor('choices', 600, provider, model),
                 signal: controller.signal,
                 jsonSchema,
                 jsonMode,
@@ -2149,6 +2156,7 @@ export const useStore = create<AppState>()(
         lastImageProviderId: undefined,
         lastDraftModel: undefined,
         defaultModelRef: undefined,
+        callTuning: undefined,
         favoriteModels: [],
         characters: [],
         worlds: [],
@@ -2257,6 +2265,14 @@ export const useStore = create<AppState>()(
         setLastImageProviderId: (id) => set({ lastImageProviderId: id }),
         setLastDraftModel: (ref) => set({ lastDraftModel: ref }),
         setDefaultModelRef: (ref) => set({ defaultModelRef: ref || undefined }),
+        setCallTuning: (kind, patch) =>
+          set((st) => {
+            const next: CallTuning = { ...st.callTuning?.[kind], ...patch }
+            for (const k of Object.keys(next) as (keyof CallTuning)[]) if (next[k] === undefined) delete next[k]
+            const map: CallTuningMap = { ...st.callTuning, [kind]: next }
+            if (Object.keys(next).length === 0) delete map[kind]
+            return { callTuning: Object.keys(map).length ? map : undefined }
+          }),
 
         loadModels: async (providerId) => {
           const provider = get().providers.find((p) => p.id === providerId)
@@ -2468,7 +2484,7 @@ export const useStore = create<AppState>()(
                 ],
                 temperature: 0.9,
                 // 世界＋登場人物2〜4人を1回で返させるので、裏方の中では最も長い応答になる
-                maxTokens: 6000,
+                ...callTuningFor('kickoff', 6000, provider, model),
                 signal,
                 jsonSchema: KICKOFF_SCHEMA,
                 jsonMode: jsonModeFor(model, get().modelsByProvider[provider.id]),
@@ -2482,7 +2498,14 @@ export const useStore = create<AppState>()(
           if (signal?.aborted) return canceled()
 
           const draft = normalizeKickoff(extractJson<Record<string, unknown>>(res.text), line)
-          if (!draft) return blank('起案結果を読み取れませんでした。空の設定から書き始められます。')
+          if (!draft) {
+            // 途中切れは理由を出す（推論するモデルは推論トークンも上限に数えられ、本文が切れやすい）
+            return blank(
+              res.finishReason === 'length'
+                ? '起案の途中で出力の上限に達しました。設定の「AI 呼び出しの詳細設定」で「物語の起案」の上限を「上限なし」にするか、推論を「オフ」にしてください。空の設定から書き始められます。'
+                : '起案結果を読み取れませんでした。空の設定から書き始められます。',
+            )
+          }
 
           get().upsertWorld(draft.world)
           for (const c of draft.characters) get().upsertCharacter(c)
@@ -2980,7 +3003,7 @@ export const useStore = create<AppState>()(
                       ...(retryHint ? [{ role: 'user' as const, content: retryHint }] : []),
                     ],
                     temperature: 0.4,
-                    maxTokens: REVIEW_MAX_TOKENS,
+                    ...callTuningFor('review', REVIEW_MAX_TOKENS, provider, model),
                     signal: controller.signal,
                     jsonSchema,
                     jsonMode,
@@ -3401,7 +3424,7 @@ export const useStore = create<AppState>()(
                   { role: 'user', content: ctxParts.join('\n\n') },
                 ],
                 temperature: 0.7,
-                maxTokens: 800,
+                ...callTuningFor('nextScene', 800, provider, model),
                 signal: controller.signal,
                 jsonSchema: NEXT_SCENE_SCHEMA,
                 jsonMode: jsonModeFor(model, get().modelsByProvider[provider.id]),
@@ -3480,7 +3503,7 @@ export const useStore = create<AppState>()(
                   { role: 'user', content: endingProposalNudge() },
                 ],
                 temperature: 0.9,
-                maxTokens: 1200,
+                ...callTuningFor('endingProposal', 1200, provider, model),
                 signal: controller.signal,
                 jsonSchema: jsonMode === 'none' ? undefined : ENDING_PROPOSALS_SCHEMA,
                 jsonMode,
@@ -3619,7 +3642,7 @@ export const useStore = create<AppState>()(
                 model,
                 messages: interludeMessages({ viewer, focus, sceneText, relationProse, timePlace }),
                 temperature: 0.9,
-                maxTokens: 2500,
+                ...callTuningFor('interlude', 2500, provider, model),
               },
               () => {},
             )
@@ -3709,7 +3732,7 @@ export const useStore = create<AppState>()(
                   aspectNames,
                 }),
                 temperature: 0.4,
-                maxTokens: 800,
+                ...callTuningFor('interlude', 800, provider, model),
                 jsonSchema: jsonMode === 'none' ? undefined : INTERLUDE_REFLECT_SCHEMA,
                 jsonMode,
               },
@@ -4685,6 +4708,24 @@ else useStore.persist.onFinishHydration(() => startSessionPersistence())
  */
 export function storeActions(): AppState {
   return useStore.getState()
+}
+
+/**
+ * 呼び出し1回ぶんの調整を `streamChat` の引数に解決する（System の詳細設定。`callTuning.ts`）。
+ * `appMaxTokens` はその種類にアプリが決めている上限（「アプリの既定」を選んだときだけ使う）。
+ * 戻り値をそのまま `streamChat` の引数へ展開する。
+ */
+export function callTuningFor(
+  kind: LlmRequestKind,
+  appMaxTokens: number,
+  provider: Provider,
+  model: string,
+): { maxTokens: number | undefined; reasoning: ReturnType<typeof resolveCallTuning>['reasoning']; supportedParameters: string[] | undefined } {
+  const st = useStore.getState()
+  return {
+    ...resolveCallTuning(st.callTuning, kind, appMaxTokens),
+    supportedParameters: st.modelsByProvider[provider.id]?.find((m) => m.id === model)?.supported_parameters,
+  }
 }
 
 /** 複数スライスをまとめて購読する（返り値を1段だけ浅く比べる） */
