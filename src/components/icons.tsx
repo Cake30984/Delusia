@@ -56,8 +56,22 @@ export type IconName =
   | 'copy'
   | 'zoom-in'
   | 'skip-forward'
+  | 'home'
+  | 'search'
 
 const PATHS: Record<IconName, ReactNode> = {
+  home: (
+    <>
+      <path d="M3 10.5 12 3l9 7.5" />
+      <path d="M5 9v11a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9" />
+    </>
+  ),
+  search: (
+    <>
+      <circle cx="11" cy="11" r="7" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </>
+  ),
   'more-horizontal': (
     <>
       <circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none" />

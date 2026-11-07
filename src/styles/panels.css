@@ -1355,75 +1355,98 @@
   font-size: 13.5px;
 }
 
-/* ---------- コマンドパレット（Ctrl+K。UI-7） ---------- */
+/* ---------- 何をしますか（PC は Ctrl+K で重ねて開く・モバイルはページ。P9 段2） ---------- */
 .cmdk-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--overlay);
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding-top: 15vh;
+  padding-top: 12vh;
   z-index: var(--z-palette);
   animation: fade 0.15s ease;
 }
 .cmdk-box {
-  width: 560px;
+  width: 600px;
   max-width: calc(100vw - 48px);
-  max-height: 60vh;
-  background: var(--bg-elev);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  max-height: 70vh;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
+.cmdk-search {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-4);
+  border-bottom: 1px solid var(--line);
+  color: var(--sub);
+  flex-shrink: 0;
+}
 .cmdk-input {
+  flex: 1;
+  min-width: 0;
   border: none;
-  border-bottom: 1px solid var(--border);
   background: transparent;
-  color: var(--text);
-  padding: 16px 18px;
-  font-size: 15px;
+  color: var(--ink);
+  padding: 16px 0;
+  font-size: var(--fs-16);
   outline: none;
   border-radius: 0;
 }
 .cmdk-list {
   overflow-y: auto;
-  padding: 6px;
+  padding: var(--sp-2);
 }
 .cmdk-empty {
   padding: 14px 12px;
-  color: var(--text-faint);
-  font-size: 13px;
+  color: var(--sub);
+  font-size: var(--fs-14);
+}
+.cmdk-group-head {
+  padding: 10px 10px 4px;
+  font-size: var(--fs-12);
+  font-weight: 700;
+  color: var(--sub);
 }
 .cmdk-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 10px;
-  border-radius: var(--radius-sm);
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: var(--r-input);
+  background: transparent;
   cursor: pointer;
-  color: var(--text);
+  color: var(--ink);
+  text-align: left;
 }
 .cmdk-item-label {
   flex: 1;
-  font-size: 13.5px;
+  font-size: var(--fs-14);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.cmdk-group {
-  font-size: 11.5px;
-  color: var(--text-faint);
+.cmdk-kbd {
+  font-family: inherit;
+  font-size: var(--fs-12);
+  color: var(--sub);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0 5px;
   flex-shrink: 0;
 }
 .cmdk-item.active {
-  background: var(--bg-elev2);
-}
-.cmdk-item.active .cmdk-group {
-  color: var(--text-dim);
+  background: var(--tint);
+  box-shadow: inset 2px 0 0 0 var(--accent);
 }
 
 /* ---------- セッション設定（FB2-C案: 左セクションナビ） ---------- */

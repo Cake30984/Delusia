@@ -47,6 +47,7 @@ import { PromptCaption } from './GalleryModal'
 import { Icon } from './icons'
 import MenuPopover from './MenuPopover'
 import ActivityIndicator from './ActivityIndicator'
+import { CommandButton, HomeButton } from './PageHeader'
 
 interface Props {
   sessionId: string
@@ -964,6 +965,8 @@ function ChatPanelBody({ session }: { session: Session }) {
       {/* 没入モードで topbar を隠した際、上端ホバーで呼び戻すための当たり判定（UI-4）。~ セレクタのため topbar の直前に置く */}
       {ui.immersive && <div className="top-hover" />}
       <div className="topbar">
+        {/* 常設のナビの代わり（P9 段2）。上端の作り直しは段3 */}
+        <HomeButton />
         <div className="session-title-wrap">
           <input
             className="session-title"
@@ -1095,6 +1098,7 @@ function ChatPanelBody({ session }: { session: Session }) {
             </MenuPopover>
           )}
         </div>
+        <CommandButton />
       </div>
 
       <div className="play-body">

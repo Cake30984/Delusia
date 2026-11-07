@@ -152,13 +152,16 @@ export const DEFAULT_MODEL = RECOMMENDED_MODELS[0].id
 /** 2026-09 までの既定。旧カセットに刻印されたままの下書きを「未設定」と見なす比較にだけ使う */
 const LEGACY_DEFAULT_MODEL = 'openrouter/auto'
 
-export type View = 'sessions' | 'characters' | 'worlds' | 'cassettes' | 'system'
+/**
+ * 画面の行き先（P9 段2）。UI だけの状態で保存しない。ブラウザの履歴とは `lib/nav.ts` がつなぐ。
+ * - `home` ホーム（物語の一覧）／`sessions` 物語を読む画面（開く物語は `activeId`）／`new` 新しい物語を始める
+ * - `characters`・`worlds`・`cassettes` 素材の3タブ／`system` 設定／`menu` 何をしますか（モバイルのページ）
+ */
+export type View = 'home' | 'sessions' | 'new' | 'characters' | 'worlds' | 'cassettes' | 'system' | 'menu'
 
-/** View が属する領域（レール切替・グリッド制御用。UI-5） */
-export function areaOf(view: View): 'play' | 'library' | 'system' {
-  if (view === 'sessions') return 'play'
-  if (view === 'system') return 'system'
-  return 'library'
+/** 素材（キャラクター・世界観・カセット）の画面か */
+export function isLibraryView(view: View): view is 'characters' | 'worlds' | 'cassettes' {
+  return view === 'characters' || view === 'worlds' || view === 'cassettes'
 }
 
 export function uid(): string {

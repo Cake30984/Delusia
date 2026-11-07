@@ -1,20 +1,21 @@
 import { useEffect, useState } from 'react'
-import { storeActions, useStore } from './store'
-import Rail from './components/Rail'
-import Sidebar from './components/Sidebar'
+import { isLibraryView, storeActions, useStore } from './store'
 import ChatPanel from './components/ChatPanel'
 import { SettingsBody } from './components/SettingsModal'
-import CharacterLibrary from './components/library/CharacterLibrary'
-import WorldLibrary from './components/library/WorldLibrary'
-import CassetteLibrary from './components/library/CassetteLibrary'
-import LibraryBar from './components/LibraryBar'
+import HomePage from './components/HomePage'
+import NewStoryPage from './components/NewStoryPage'
+import LibraryPage from './components/LibraryPage'
+import PageHeader from './components/PageHeader'
+import ModalShell from './components/ModalShell'
+import { ImageJobsBody } from './components/ImageJobsPanel'
 import SceneReviewModal from './components/SceneReviewModal'
 import SessionEditor from './components/SessionEditor'
 import StoryKickoffModal from './components/StoryKickoffModal'
 import FirstRunWizard from './components/FirstRunWizard'
 import WebStorageNotice from './components/WebStorageNotice'
 import DialogHost from './components/DialogHost'
-import CommandPalette from './components/CommandPalette'
+import CommandPalette, { MenuPage } from './components/CommandPalette'
+import { startHistorySync, useIsMobile, useOverlays } from './lib/nav'
 import { useGlobalShortcuts } from './lib/shortcuts'
 import { isBrowserStorage, sessionsLocationLabel, stateLocationLabel } from './lib/platform'
 import { completeOpenRouterOAuthRedirect, pendingOAuthRedirect } from './lib/oauthPkce'
@@ -70,10 +71,8 @@ export default function App() {
   const infoNotice = useStore((st) => st.infoNotice)
   const schemaError = useStore((st) => st.schemaError)
   const ui = useStore((st) => st.ui)
-  // 空状態の行き先を決めるためだけの購読（件数＝プリミティブなので本体は購読しない）
-  const characterCount = useStore((st) => st.characters.length)
-  const { clearError, createSession, dismissImageJobToasts, openStarterStory, setInfoNotice, upsertProvider } =
-    storeActions()
+  const { clearError, dismissImageJobToasts, setInfoNotice, upsertProvider } = storeActions()
+  const mobile = useIsMobile()
   // storage は async 化済み（Web は同期 localStorage・Tauri は T3 のファイル backend）。
   // ハイドレーション完了までスプラッシュを表示する。
   const [hydrated, setHydrated] = useState(() => useStore.persist.hasHydrated())
@@ -81,12 +80,9 @@ export default function App() {
   // hasUsableProvider を空キーのまま評価して System へ誤って飛ばさないためのゲート
   // （Web では hydrateProviderSecrets が即resolveするため体感の遅延はない）
   const [secretsReady, setSecretsReady] = useState(false)
-  const [paletteOpen, setPaletteOpen] = useState(false)
-  // 空状態から新規作成した直後に開くセッション設定（F3/R15）
-  const [newEditorId, setNewEditorId] = useState<string | null>(null)
-  // 一行から始める（P4）。起案が終わると自分でセッション設定へ引き継ぐ
-  const [showKickoff, setShowKickoff] = useState(false)
-  const startNew = (mode: 'roleplay' | 'story') => setNewEditorId(createSession(mode))
+  // 画面をまたいで重ねて開くもの（何をしますか・ジョブ・一行から・白紙から作った直後の設定）
+  const { paletteOpen, setPaletteOpen, jobsOpen, setJobsOpen, kickoffOpen, setKickoffOpen, newEditorId, setNewEditorId } =
+    useOverlays()
   const newEditorSession = useStore((st) =>
     newEditorId ? st.sessions.find((s) => s.id === newEditorId) : undefined,
   )
@@ -246,8 +242,22 @@ export default function App() {
     return () => mq.removeEventListener('change', apply)
   }, [ui.palette, ui.appearance, ui.customPalettes])
 
+  // 画面の行き先とブラウザの履歴をつなぐ（P9 段2）。読み込みと OAuth の戻りの処理が済んでから
+  // （OAuth の戻りは URL を書き換えるときに history.state を空にする）
+  useEffect(() => {
+    if (!hydrated || schemaError || !oauthResolved) return
+    return startHistorySync()
+  }, [hydrated, schemaError, oauthResolved])
+
+  // モバイルの骨組みにいる間は「何をしますか」を重ねない（メニューのページを使う）
+  useEffect(() => {
+    if (mobile) setPaletteOpen(false)
+    else if (useStore.getState().view === 'menu') useStore.getState().setView('home')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mobile])
+
   // グローバルショートカット（UI-7）: Ctrl+K/1/2/3/G/.。没入モードの Ctrl+. トグルもここに集約（旧 UI-4 実装を移管）
-  useGlobalShortcuts(() => setPaletteOpen((v) => !v))
+  useGlobalShortcuts()
 
   if (!hydrated || !secretsReady) {
     return (
@@ -289,82 +299,37 @@ export default function App() {
     )
   }
 
+  const reading = view === 'sessions' && !!activeId && hasActiveSession
+
   return (
     <div
       className={
         'app' +
-        // 没入は Play（セッション）ビューでのみ有効。Library/System で効くとレールごと消えて戻れなくなる（F0/A6）
-        (ui.immersive && view === 'sessions' ? ' immersive' : '') +
-        (view === 'system' ? ' no-side' : '')
+        (mobile ? ' mobile' : ' desktop') +
+        // 没入は物語の画面でのみ有効（他の画面で効くと戻れなくなる。F0/A6）
+        (ui.immersive && reading ? ' immersive' : '')
       }
     >
-      <Rail />
-      {view !== 'system' && <Sidebar />}
-
-      {view === 'characters' ? (
-        <div className="main">
-          <LibraryBar />
-          <CharacterLibrary />
-        </div>
-      ) : view === 'worlds' ? (
-        <div className="main">
-          <LibraryBar />
-          <WorldLibrary />
-        </div>
-      ) : view === 'cassettes' ? (
-        <div className="main">
-          <LibraryBar />
-          <CassetteLibrary />
-        </div>
-      ) : view === 'system' ? (
-        <div className="library">
-          <div className="page-narrow">
-            <div className="library-head">
-              <h2>
-                <Icon name="settings" size={18} className="head-icon" /> 設定・データ管理
-              </h2>
-            </div>
-            <SettingsBody />
-          </div>
-        </div>
-      ) : activeId && hasActiveSession ? (
+      {reading && activeId ? (
         <ChatPanel key={activeId} sessionId={activeId} />
-      ) : (
-        <div className="main">
-          <div className="empty">
-            <div>
-              <h2>AI とロールプレイ・物語づくりを</h2>
-              <p>
-                OpenRouter のお好きなモデルで、キャラとの会話や
-                <br />
-                自動で進む物語を楽しめます。
-              </p>
-              {/* 0→1 の主導線は「一行から始める」（P4）。素材が無ければサンプル、あれば
-                  手作りの物語を次点に置く。ロールプレイは副次の入口として残す */}
-              <div className="cta">
-                <button onClick={() => setShowKickoff(true)}>一行から始める</button>
-                {characterCount === 0 ? (
-                  <button className="ghost" onClick={() => openStarterStory()}>
-                    サンプルの物語を開く
-                  </button>
-                ) : (
-                  <button className="ghost" onClick={() => startNew('story')}>
-                    物語を作る
-                  </button>
-                )}
-                <button className="ghost" onClick={() => startNew('roleplay')}>
-                  ロールプレイを始める
-                </button>
-              </div>
-              {!hasUsableProvider && (
-                <p style={{ marginTop: 20, fontSize: 13, color: 'var(--text-faint)' }}>
-                  左のレール最下段の「設定」から接続先を登録してください（OpenRouter 等の API キー、
-                  または Ollama / LM Studio のようなローカルの OpenAI 互換サーバ）。
-                </p>
-              )}
+      ) : view === 'new' ? (
+        <NewStoryPage />
+      ) : isLibraryView(view) ? (
+        <LibraryPage view={view} />
+      ) : view === 'system' ? (
+        <div className="shell-page">
+          <PageHeader title="設定" />
+          <div className="shell-body">
+            <div className="page-narrow">
+              <SettingsBody />
             </div>
           </div>
         </div>
+      ) : view === 'menu' && mobile ? (
+        <MenuPage />
+      ) : (
+        // ホーム（行き先が home のときと、開く物語が無いとき）
+        <HomePage />
       )}
 
       {/* レビューモーダルは、該当セッションを Play で開いている時だけ出す（FB8-B #14）。
@@ -394,9 +359,15 @@ export default function App() {
         <SessionEditor session={newEditorSession} onClose={() => setNewEditorId(null)} />
       )}
 
-      {showKickoff && <StoryKickoffModal onClose={() => setShowKickoff(false)} />}
+      {kickoffOpen && <StoryKickoffModal onClose={() => setKickoffOpen(false)} />}
 
-      {paletteOpen && <CommandPalette onClose={() => setPaletteOpen(false)} />}
+      {paletteOpen && !mobile && <CommandPalette onClose={() => setPaletteOpen(false)} />}
+
+      {jobsOpen && (
+        <ModalShell title="画像生成ジョブ" onClose={() => setJobsOpen(false)}>
+          <ImageJobsBody />
+        </ModalShell>
+      )}
 
       <DialogHost />
 

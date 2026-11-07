@@ -1,138 +1,50 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { currentScene, storeActions, useStore, type View } from '../store'
+import { useStore } from '../store'
 import { useModalEscape } from '../lib/modalStack'
-import type { DockTab } from '../types'
-import { Icon, type IconName } from './icons'
+import { buildCommands, commandInputFromStore, filterCommands, type Command } from '../lib/commands'
+import { goBack, goBackThen, useIsMobile } from '../lib/nav'
+import { Icon } from './icons'
 
-interface Command {
-  id: string
-  label: string
-  group: string
-  icon: IconName
-  run: () => void
-}
-
-interface Props {
-  onClose: () => void
-}
-
-/** Ctrl+K で開くコマンドパレット（UI-7）。セッション・素材への移動＋固定コマンドの実行 */
-export default function CommandPalette({ onClose }: Props) {
+/**
+ * 「何をしますか」の検索欄と一覧（P9 段2）。PC の重ねて開く版（Ctrl+K）とモバイルのページが共有する。
+ * 一覧の中身は `lib/commands.ts`。上下キーで選び Enter で実行する
+ */
+function CommandList({ onRun, autoFocus }: { onRun: (c: Command) => void; autoFocus: boolean }) {
+  // 一覧に効く値だけを購読する（中身は commandInputFromStore が store から読み直す）
   const sessions = useStore((st) => st.sessions)
-  const activeId = useStore((st) => st.activeId)
   const characters = useStore((st) => st.characters)
   const worlds = useStore((st) => st.worlds)
-  const ui = useStore((st) => st.ui)
+  const view = useStore((st) => st.view)
+  const activeId = useStore((st) => st.activeId)
   const isStreaming = useStore((st) => st.isStreaming)
   const isReviewing = useStore((st) => st.isReviewing)
-  const { setActive, setView, setUiPrefs, continueStory, startStory, prepareSceneReview } =
-    storeActions()
+  const immersive = useStore((st) => st.ui.immersive)
+  const jobCount = useStore((st) => st.imageJobs.length)
+  const mobile = useIsMobile()
 
   const [query, setQuery] = useState('')
   const [index, setIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
-
-  useModalEscape(onClose)
+  const listRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
+    if (autoFocus) inputRef.current?.focus()
+  }, [autoFocus])
 
-  const activeSession = sessions.find((s) => s.id === activeId)
-  const scene = activeSession ? currentScene(activeSession) : undefined
-
-  const goto = (v: View) => () => setView(v)
-  const openDock = (tab: DockTab) => () => {
-    setView('sessions')
-    setUiPrefs({ dockTab: tab })
-  }
-
-  const commands = useMemo<Command[]>(() => {
-    const list: Command[] = []
-
-    for (const s of sessions) {
-      list.push({
-        id: `session:${s.id}`,
-        label: s.title || '無題のセッション',
-        group: 'セッション',
-        icon: 'message-circle',
-        run: () => setActive(s.id),
-      })
-    }
-    for (const c of characters) {
-      if (!c.name) continue
-      list.push({ id: `char:${c.id}`, label: c.name, group: 'キャラクター', icon: 'users', run: goto('characters') })
-    }
-    for (const w of worlds) {
-      if (!w.name) continue
-      list.push({ id: `world:${w.id}`, label: w.name, group: '世界観', icon: 'globe', run: goto('worlds') })
-    }
-
-    if (activeSession) {
-      if (activeSession.mode === 'story' && !isStreaming) {
-        const storyStarted = activeSession.messages.some((m) => m.sceneId === scene?.id)
-        list.push({
-          id: 'cmd:continue',
-          label: storyStarted ? '続ける' : '物語をはじめる',
-          group: 'コマンド',
-          icon: storyStarted ? 'fast-forward' : 'play',
-          run: () => void (storyStarted ? continueStory() : startStory()),
-        })
-      }
-      if (scene && !isStreaming && !isReviewing) {
-        list.push({
-          id: 'cmd:end-scene',
-          label: 'このシーンを終える',
-          group: 'コマンド',
-          icon: 'check',
-          run: () => void prepareSceneReview(),
-        })
-      }
-      list.push({ id: 'cmd:dock-status', label: '状態を開く', group: 'コマンド', icon: 'bar-chart-3', run: openDock('status') })
-      list.push({
-        id: 'cmd:dock-discovery',
-        label: '発見ログを開く',
-        group: 'コマンド',
-        icon: 'book-open',
-        run: openDock('discovery'),
-      })
-      list.push({ id: 'cmd:dock-gallery', label: 'ギャラリーを開く', group: 'コマンド', icon: 'image', run: openDock('gallery') })
-      list.push({
-        id: 'cmd:dock-branch',
-        label: '分岐ツリーを開く',
-        group: 'コマンド',
-        icon: 'git-branch',
-        run: openDock('branch'),
-      })
-      list.push({ id: 'cmd:dock-jobs', label: '画像生成ジョブを開く', group: 'コマンド', icon: 'hourglass', run: openDock('jobs') })
-    }
-
-    list.push({
-      id: 'cmd:immersive',
-      label: ui.immersive ? '没入モードを解除' : '没入モードにする',
-      group: 'コマンド',
-      icon: 'maximize',
-      run: () => setUiPrefs({ immersive: !ui.immersive }),
-    })
-    list.push({ id: 'cmd:system', label: '設定・データ管理を開く', group: 'コマンド', icon: 'settings', run: goto('system') })
-
-    return list
+  const commands = useMemo(
+    () => buildCommands(commandInputFromStore()),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessions, characters, worlds, activeSession, scene, isStreaming, isReviewing, ui.immersive])
-
-  const q = query.trim().toLowerCase()
-  const results = (
-    q ? commands.filter((c) => (c.label + ' ' + c.group).toLowerCase().includes(q)) : commands
-  ).slice(0, 40)
+    [sessions, characters, worlds, view, activeId, isStreaming, isReviewing, immersive, jobCount],
+  )
+  const results = filterCommands(commands, query).slice(0, 60)
 
   useEffect(() => setIndex(0), [query])
-
-  const exec = (c: Command) => {
-    c.run()
-    onClose()
-  }
+  useEffect(() => {
+    listRef.current?.querySelector('.cmdk-item.active')?.scrollIntoView({ block: 'nearest' })
+  }, [index])
 
   const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.nativeEvent.isComposing) return
     if (e.key === 'ArrowDown') {
       e.preventDefault()
       setIndex((i) => Math.min(i + 1, results.length - 1))
@@ -141,36 +53,81 @@ export default function CommandPalette({ onClose }: Props) {
       setIndex((i) => Math.max(i - 1, 0))
     } else if (e.key === 'Enter') {
       e.preventDefault()
-      if (results[index]) exec(results[index])
+      if (results[index]) onRun(results[index])
     }
   }
 
   return (
-    <div className="cmdk-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="cmdk-box">
+    <>
+      <div className="cmdk-search">
+        <Icon name="search" size={16} />
         <input
           ref={inputRef}
           className="cmdk-input"
-          placeholder="セッション・キャラクター・コマンドを検索…"
+          placeholder="物語・キャラクター・操作を探す"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={onKeyDown}
         />
-        <div className="cmdk-list">
-          {results.length === 0 && <div className="cmdk-empty">見つかりません。</div>}
-          {results.map((c, i) => (
-            <div
-              key={c.id}
+      </div>
+      <div className="cmdk-list" ref={listRef}>
+        {results.length === 0 && <div className="cmdk-empty">見つかりません。</div>}
+        {results.map((c, i) => (
+          <div key={c.id}>
+            {(i === 0 || results[i - 1].group !== c.group) && <div className="cmdk-group-head">{c.group}</div>}
+            <button
+              type="button"
               className={'cmdk-item' + (i === index ? ' active' : '')}
               onMouseEnter={() => setIndex(i)}
-              onClick={() => exec(c)}
+              onClick={() => onRun(c)}
             >
-              <Icon name={c.icon} size={15} />
+              <Icon name={c.icon} size={16} />
               <span className="cmdk-item-label">{c.label}</span>
-              <span className="cmdk-group">{c.group}</span>
-            </div>
-          ))}
+              {!mobile && c.shortcut && <kbd className="cmdk-kbd">{c.shortcut}</kbd>}
+            </button>
+          </div>
+        ))}
+      </div>
+    </>
+  )
+}
+
+/** PC: Ctrl+K で本文の上に重ねて開く */
+export default function CommandPalette({ onClose }: { onClose: () => void }) {
+  useModalEscape(onClose)
+  return (
+    <div className="cmdk-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="cmdk-box" role="dialog" aria-label="何をしますか">
+        <CommandList
+          autoFocus
+          onRun={(c) => {
+            onClose()
+            c.run()
+          }}
+        />
+      </div>
+    </div>
+  )
+}
+
+/** モバイル: 右上の「メニュー」で開く1枚のページ。戻るで元の画面へ */
+export function MenuPage() {
+  return (
+    <div className="shell-page menu-page">
+      <header className="shell-head">
+        <h1 className="shell-title">何をしますか</h1>
+        <div className="shell-head-end">
+          <button className="btn ghost" onClick={goBack}>
+            閉じる
+          </button>
         </div>
+      </header>
+      <div className="menu-body">
+        <CommandList
+          autoFocus={false}
+          // 先にメニューを閉じて元の画面へ戻ってから実行する（メニューは履歴に残さない）
+          onRun={(c) => goBackThen(c.run)}
+        />
       </div>
     </div>
   )

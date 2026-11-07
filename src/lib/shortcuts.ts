@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { currentScene, useStore } from '../store'
 import { modalStackSize } from './modalStack'
+import { isMobileWidth, useOverlays } from './nav'
 
 /**
  * グローバルショートカット（UI-7）。App.tsx から1回だけ登録する単一 keydown リスナ。
@@ -8,7 +9,7 @@ import { modalStackSize } from './modalStack'
  * （Escape は没入解除のため例外） ③ モーダルが1枚でも開いている間は Escape 以外無効
  * （Escape 自体は各モーダルの useModalEscape が最前面優先で処理する）。
  */
-export function useGlobalShortcuts(onTogglePalette: () => void) {
+export function useGlobalShortcuts() {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.isComposing) return
@@ -34,7 +35,9 @@ export function useGlobalShortcuts(onTogglePalette: () => void) {
 
       if (key === 'k') {
         e.preventDefault()
-        onTogglePalette()
+        // 「何をしますか」。モバイルの骨組み（キーボードをつないだタブレット等）ではメニューのページへ
+        if (isMobileWidth()) useStore.getState().setView('menu')
+        else useOverlays.getState().setPaletteOpen(!useOverlays.getState().paletteOpen)
         return
       }
 
@@ -46,8 +49,10 @@ export function useGlobalShortcuts(onTogglePalette: () => void) {
       }
 
       if (e.key === '1') {
+        // 読んでいる物語へ。開く物語が無ければホーム
         e.preventDefault()
-        useStore.getState().setView('sessions')
+        const st = useStore.getState()
+        st.setView(st.sessions.some((s) => s.id === st.activeId) ? 'sessions' : 'home')
         return
       }
       if (e.key === '2') {
@@ -65,6 +70,8 @@ export function useGlobalShortcuts(onTogglePalette: () => void) {
         e.preventDefault()
         const st = useStore.getState()
         const session = st.sessions.find((s) => s.id === st.activeId)
+        // 読んでいる画面でだけ（別の画面で押して裏で進むと分からなくなる）
+        if (st.view !== 'sessions') return
         if (!session || session.mode !== 'story' || st.isStreaming) return
         const scene = currentScene(session)
         const storyStarted = session.messages.some((m) => m.sceneId === scene?.id)
