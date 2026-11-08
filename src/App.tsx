@@ -249,6 +249,11 @@ export default function App() {
     return startHistorySync()
   }, [hydrated, schemaError, oauthResolved])
 
+  // 物語の画面を離れたら、そこで開いていたもの（あらすじ等）を閉じる。メニューのページは物語の続きなので閉じない
+  useEffect(() => {
+    if (view !== 'sessions' && view !== 'menu') useOverlays.getState().setReaderModal(null)
+  }, [view])
+
   // モバイルの骨組みにいる間は「何をしますか」を重ねない（メニューのページを使う）
   useEffect(() => {
     if (mobile) setPaletteOpen(false)

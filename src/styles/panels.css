@@ -1569,3 +1569,23 @@
   gap: 8px;
   margin-top: 8px;
 }
+
+/* 進み具合の小さな表示（章を閉じるの次の章の候補を考え中。旧 composer.css から移した） */
+.choices-loading {
+  font-size: 12px;
+  color: var(--accent);
+  margin-bottom: 10px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.choices-loading::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: blink 1s steps(2) infinite;
+}

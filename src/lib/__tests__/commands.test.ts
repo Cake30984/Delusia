@@ -23,7 +23,7 @@ const base: CommandInput = {
 const reading: CommandInput = {
   ...base,
   view: 'sessions',
-  active: { id: 's1', mode: 'story', storyStarted: true, hasScene: true },
+  active: { id: 's1', mode: 'story', storyStarted: true, hasScene: true, ended: false, archived: false },
 }
 
 const ids = (input: CommandInput) => buildCommands(input).map((c) => c.id)
@@ -71,6 +71,17 @@ describe('buildCommands', () => {
     expect(ids(base)).not.toContain('char:c2')
     expect(ids(base)).not.toContain('cmd:jobs')
     expect(ids({ ...base, imageJobCount: 2 })).toContain('cmd:jobs')
+  })
+
+  it('物語の画面の操作（あらすじ・書き出し・設定など）を出し、完結後は続けると終わり方を出さない', () => {
+    for (const id of ['cmd:log', 'cmd:scene', 'cmd:ending', 'cmd:export', 'cmd:cassette', 'cmd:editor', 'cmd:archive', 'cmd:delete']) {
+      expect(ids(reading)).toContain(id)
+    }
+    const ended = ids({ ...reading, active: { ...reading.active!, ended: true } })
+    expect(ended).not.toContain('cmd:continue')
+    expect(ended).not.toContain('cmd:end-scene')
+    expect(ended).not.toContain('cmd:ending')
+    expect(ended).toContain('cmd:export')
   })
 
   it('グループの順に並ぶ', () => {

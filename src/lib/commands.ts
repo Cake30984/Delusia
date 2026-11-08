@@ -1,7 +1,8 @@
 import { currentScene, useStore, type View } from '../store'
 import type { DockTab, Session } from '../types'
 import type { IconName } from '../components/icons'
-import { useOverlays, viewBeneathMenu } from './nav'
+import { useOverlays, viewBeneathMenu, type ReaderModal } from './nav'
+import { appConfirm } from './dialogs'
 
 /**
  * 「何をしますか」の操作一覧（P9 段2）。PC の Ctrl+K と、モバイルの「メニュー」のページが同じ一覧を使う。
@@ -33,6 +34,9 @@ export interface CommandInput {
     /** 今の章に本文が1つでもあるか（「物語をはじめる」と「続ける」の出し分け） */
     storyStarted: boolean
     hasScene: boolean
+    /** 完結済み（続ける・終わり方を出さない） */
+    ended: boolean
+    archived: boolean
   } | null
   isStreaming: boolean
   isReviewing: boolean
@@ -44,6 +48,10 @@ const st = () => useStore.getState()
 
 function goto(view: View) {
   return () => st().setView(view)
+}
+
+function openReader(modal: ReaderModal) {
+  return () => useOverlays.getState().setReaderModal(modal)
 }
 
 function openDock(tab: DockTab) {
@@ -60,7 +68,7 @@ export function buildCommands(input: CommandInput): Command[] {
 
   // この物語（読んでいる画面からだけ。別の画面から「続ける」を押して裏で進むと分からなくなる）
   if (reading && active) {
-    if (active.mode === 'story' && !input.isStreaming) {
+    if (active.mode === 'story' && !input.isStreaming && !active.ended) {
       list.push({
         id: 'cmd:continue',
         label: active.storyStarted ? '続ける' : '物語をはじめる',
@@ -70,7 +78,7 @@ export function buildCommands(input: CommandInput): Command[] {
         run: () => void (active.storyStarted ? st().continueStory() : st().startStory()),
       })
     }
-    if (active.hasScene && !input.isStreaming && !input.isReviewing) {
+    if (active.hasScene && !input.isStreaming && !input.isReviewing && !active.ended) {
       list.push({
         id: 'cmd:end-scene',
         label: 'この章を閉じる',
@@ -83,6 +91,32 @@ export function buildCommands(input: CommandInput): Command[] {
     list.push({ id: 'cmd:dock-discovery', label: '分かったことを見る', group: 'この物語', icon: 'book-open', run: openDock('discovery') })
     list.push({ id: 'cmd:dock-branch', label: '分岐としおりを見る', group: 'この物語', icon: 'git-branch', run: openDock('branch') })
     list.push({ id: 'cmd:dock-gallery', label: '挿絵を見る', group: 'この物語', icon: 'image', run: openDock('gallery') })
+    list.push({ id: 'cmd:log', label: 'あらすじを読む', group: 'この物語', icon: 'scroll-text', run: openReader('log') })
+    if (active.hasScene) {
+      list.push({ id: 'cmd:scene', label: '章の名前と状況を直す', group: 'この物語', icon: 'pencil', run: openReader('scene') })
+    }
+    if (active.mode === 'story' && !active.ended) {
+      list.push({ id: 'cmd:ending', label: '終わり方を考える', group: 'この物語', icon: 'flag', run: openReader('ending') })
+    }
+    list.push({ id: 'cmd:export', label: '物語を書き出す', group: 'この物語', icon: 'download', run: openReader('export') })
+    list.push({ id: 'cmd:cassette', label: 'カセットにする', group: 'この物語', icon: 'library-big', run: openReader('cassette') })
+    list.push({ id: 'cmd:editor', label: '物語の設定', group: 'この物語', icon: 'settings', run: openReader('editor') })
+    list.push({
+      id: 'cmd:archive',
+      label: active.archived ? 'アーカイブから戻す' : 'アーカイブする',
+      group: 'この物語',
+      icon: 'archive',
+      run: () => st().updateSession(active.id, { archived: !active.archived }),
+    })
+    list.push({
+      id: 'cmd:delete',
+      label: '物語を削除',
+      group: 'この物語',
+      icon: 'trash-2',
+      run: async () => {
+        if (await appConfirm({ message: 'この物語を削除しますか？', danger: true })) st().deleteSession(active.id)
+      },
+    })
   }
 
   // 移動（行き先）
@@ -165,6 +199,8 @@ export function commandInputFromStore(): CommandInput {
           mode: session.mode,
           storyStarted: session.messages.some((m) => m.sceneId === scene?.id),
           hasScene: !!scene,
+          ended: !!session.ending,
+          archived: !!session.archived,
         }
       : null,
     isStreaming: s.isStreaming,

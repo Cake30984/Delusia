@@ -1,0 +1,651 @@
+/* ---------- 物語を読む画面（P9 段3。E ひと続きの紙面） ----------
+   PC: 上端（現在地と操作）＋ 左の章の一覧・中央の本文と「次の一手」・右の余白の注記（3列がまとめてスクロールする）
+   モバイル: 上端（題とメニュー）＋ 本文と「次の一手」だけ */
+.reader {
+  --reader-gap: 48px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--bg);
+}
+.reader-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  min-height: 52px;
+  padding: var(--sp-1) var(--sp-4) var(--sp-1) var(--sp-5);
+  background: var(--bg);
+  flex-shrink: 0;
+}
+.reader.mobile .reader-head {
+  padding: var(--sp-1) var(--sp-2) var(--sp-1) var(--sp-4);
+}
+.reader-crumb {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+  font-size: var(--fs-13);
+  color: var(--sub);
+}
+.reader-crumb.mobile {
+  font-size: var(--fs-12);
+  gap: 6px;
+}
+.reader-crumb-link {
+  background: transparent;
+  border: none;
+  padding: 4px 2px;
+  color: var(--sub);
+  font-size: inherit;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.reader-crumb-link:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+.reader-crumb-link.current,
+.reader-crumb-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.reader-crumb-chapter {
+  color: var(--ink);
+  white-space: nowrap;
+}
+.reader-crumb-sep {
+  flex-shrink: 0;
+}
+.reader-head-end {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-shrink: 0;
+}
+
+/* 本文の面。右のパネル（旧ドック）はこの上に重なる */
+.reader-main {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+.reader-scroll {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.reader-grid {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(0, var(--content-width)) minmax(200px, 1fr);
+  column-gap: var(--reader-gap);
+  padding: 0 var(--sp-6);
+  min-height: 100%;
+}
+.reader-text {
+  min-width: 0;
+  padding: var(--sp-6) 0 96px;
+}
+.reader.mobile .reader-text {
+  padding: var(--sp-2) 20px 64px;
+}
+.reader-empty {
+  color: var(--sub);
+  font-size: var(--fs-14);
+}
+
+/* 左の章の一覧（見出しの高さに合わせて止める） */
+.reader-left {
+  min-width: 0;
+}
+.chapter-list {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 64px 0 var(--sp-5);
+  max-height: 100vh;
+  overflow-y: auto;
+}
+.chapter-link {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: baseline;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: var(--r-input);
+  padding: 6px 8px;
+  color: var(--sub);
+  font-size: var(--fs-13);
+  min-width: 0;
+}
+.chapter-link:hover {
+  color: var(--ink);
+  background: var(--tint);
+}
+.chapter-link.current {
+  color: var(--ink);
+  font-weight: 700;
+}
+.chapter-link-num {
+  flex-shrink: 0;
+  font-size: var(--fs-12);
+}
+.chapter-link-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 章の見出し */
+.chapter-head {
+  margin: 56px 0 var(--sp-5);
+  scroll-margin-top: var(--sp-5);
+}
+.reader-text > .chapter-head:first-child,
+.reader-text > .reader-empty + .chapter-head {
+  margin-top: var(--sp-2);
+}
+.chapter-num {
+  font-size: var(--fs-12);
+  color: var(--sub);
+  margin-bottom: 4px;
+}
+.chapter-title {
+  margin: 0;
+  font-size: var(--fs-20);
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.4;
+}
+.chapter-head.current .chapter-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  max-width: 100%;
+  background: transparent;
+  border: none;
+  border-radius: var(--r-input);
+  padding: 2px 6px;
+  margin-left: -6px;
+  font-size: var(--fs-26);
+  text-align: left;
+}
+.reader.mobile .chapter-head.current .chapter-title {
+  font-size: var(--fs-20);
+}
+.chapter-head.current .chapter-title:hover {
+  background: var(--tint);
+}
+.chapter-title-pencil {
+  color: var(--sub);
+  opacity: 0;
+  flex-shrink: 0;
+}
+.chapter-head.current .chapter-title:hover .chapter-title-pencil,
+.chapter-head.current .chapter-title:focus-visible .chapter-title-pencil {
+  opacity: 1;
+}
+.reader.mobile .chapter-title-pencil {
+  opacity: 1;
+}
+.chapter-title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+.chapter-title-row .chapter-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 段落ごとの操作。PC は右の余白へ縦に並べ、段落に重ねたとき（フォーカス）だけ出す */
+[data-msg-id] {
+  position: relative;
+}
+[data-msg-id]:focus {
+  outline: none;
+}
+.msg-actions {
+  display: flex;
+  gap: 2px;
+}
+.msg-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  font-family: var(--font-ui, inherit);
+  font-size: var(--fs-12);
+  font-style: normal;
+  line-height: 1.4;
+  padding: 4px 6px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.msg-actions button:hover {
+  background: var(--tint);
+  color: var(--ink);
+}
+.reader.desktop .msg-actions {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  /* 段落と余白のあいだも当たり判定に含める（離れた瞬間に消えないように） */
+  padding-left: calc(var(--reader-gap) - 6px);
+  flex-direction: column;
+  align-items: flex-start;
+  z-index: 2;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s;
+}
+.reader.desktop .msg-actions::before {
+  content: '';
+  position: absolute;
+  inset: -4px -8px -4px calc(var(--reader-gap) - 10px);
+  background: var(--bg);
+  border-left: 2px solid var(--line);
+  z-index: -1;
+}
+.reader.desktop [data-msg-id]:hover > .msg-actions,
+.reader.desktop [data-msg-id]:focus-within > .msg-actions,
+.reader.desktop .msg:hover .msg-actions,
+.reader.desktop .msg:focus-within .msg-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+/* 会話劇の吹き出しは本文の幅いっぱいではないので、余白の位置を本文の右端にそろえる */
+.reader.desktop .msg .msg-actions {
+  left: auto;
+  right: calc(-1 * (var(--reader-gap)) - 180px);
+  width: 180px;
+}
+.reader.desktop .msg .bubble {
+  position: static;
+}
+/* モバイル: 段落を押すと段落の下に出る */
+.reader.mobile .msg-actions {
+  display: none;
+  flex-wrap: wrap;
+  margin-top: var(--sp-2);
+  padding: var(--sp-1);
+  border-radius: var(--r-input);
+  background: var(--tint);
+  font-family: inherit;
+}
+.reader.mobile [data-msg-id]:focus-within .msg-actions {
+  display: flex;
+}
+.reader.mobile .msg-actions button {
+  min-height: 36px;
+  font-size: var(--fs-13);
+}
+
+/* 右の余白の注記 */
+.reader-right {
+  min-width: 0;
+}
+.margin-notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding-top: 104px;
+}
+.margin-note {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-left: 2px solid var(--line);
+  border-radius: 0;
+  padding: 0 0 0 10px;
+  color: var(--sub);
+  font-size: var(--fs-12);
+  line-height: 1.6;
+  max-width: 260px;
+}
+button.margin-note:hover {
+  color: var(--ink);
+  border-left-color: var(--accent);
+}
+.margin-note.warn {
+  color: var(--ink);
+  border-left-color: var(--accent);
+}
+.margin-note-label {
+  font-weight: 700;
+}
+.margin-note-line.clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ---------- 次の一手（本文の末尾。統合案5） ---------- */
+.next-move {
+  margin-top: 28px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--tint);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.reader.mobile .next-move {
+  margin-top: 22px;
+  padding: var(--sp-4);
+  gap: var(--sp-3);
+}
+.next-move:empty {
+  display: none;
+}
+.nm-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.nm-spacer {
+  flex: 1;
+}
+.nm-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  height: 48px;
+  padding: 0 32px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: var(--fs-16);
+  font-weight: 700;
+}
+.nm-primary:hover {
+  background: color-mix(in srgb, var(--accent) 85%, var(--ink));
+}
+.reader.mobile .nm-primary {
+  height: 52px;
+  font-size: var(--fs-17);
+  width: 100%;
+}
+.nm-sub {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 12px;
+  border: none;
+  border-radius: var(--r-input);
+  background: transparent;
+  color: var(--ink);
+  font-size: var(--fs-13);
+}
+.nm-sub:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+}
+.nm-sub:disabled {
+  color: var(--sub);
+  opacity: 0.6;
+  cursor: default;
+}
+.nm-close {
+  color: var(--sub);
+}
+.nm-pace {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.nm-pace .nm-sub {
+  justify-content: center;
+  min-height: var(--tap);
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+.nm-link {
+  background: transparent;
+  border: none;
+  padding: 6px 4px;
+  color: var(--accent);
+  font-size: var(--fs-13);
+  white-space: nowrap;
+}
+.nm-link:hover:not(:disabled) {
+  text-decoration: underline;
+}
+.nm-link:disabled {
+  color: var(--sub);
+}
+.nm-row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+.nm-input {
+  position: relative;
+  display: flex;
+}
+.nm-input textarea {
+  flex: 1;
+  min-height: 44px;
+  max-height: 200px;
+  resize: none;
+  padding: 11px 48px 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-input);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: var(--fs-14);
+  line-height: 1.6;
+  outline: none;
+}
+.nm-input textarea:focus {
+  border-color: var(--edge);
+}
+.reader.mobile .nm-input textarea {
+  font-size: var(--fs-16); /* iOS が入力時に拡大しない大きさ */
+}
+.nm-send {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--on-accent);
+  display: grid;
+  place-items: center;
+}
+.nm-status {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-13);
+  color: var(--sub);
+}
+.nm-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: nm-spin 0.9s linear infinite;
+}
+@keyframes nm-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.nm-stop {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 48px;
+  padding: 0 32px;
+  align-self: flex-start;
+  border: 1px solid var(--ink);
+  border-radius: var(--r-pill);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: var(--fs-16);
+  font-weight: 700;
+}
+.reader.mobile .nm-stop {
+  align-self: stretch;
+  height: 52px;
+}
+.nm-note {
+  font-size: var(--fs-12);
+  color: var(--sub);
+}
+.reader.mobile .nm-note {
+  text-align: center;
+}
+.nm-alert {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.nm-alert-icon {
+  flex: none;
+  color: var(--danger);
+  margin-top: 2px;
+}
+.nm-alert-title {
+  font-size: var(--fs-15);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.nm-alert-body {
+  font-size: var(--fs-13);
+  line-height: 1.7;
+  color: var(--sub);
+}
+.nm-details {
+  font-size: var(--fs-13);
+  color: var(--sub);
+}
+.nm-details summary {
+  cursor: pointer;
+  padding: 6px 0;
+}
+.nm-details p {
+  margin: 4px 0 0;
+  word-break: break-word;
+}
+.nm-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.nm-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  text-align: left;
+  min-height: var(--tap);
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: var(--fs-14);
+  line-height: 1.6;
+}
+.nm-choice:hover {
+  border-color: var(--accent);
+}
+.nm-choice-num {
+  flex: none;
+  color: var(--accent);
+  font-weight: 700;
+}
+.nm-hint,
+.nm-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  font-size: var(--fs-13);
+  color: var(--ink);
+}
+.nm-hint > span,
+.nm-banner > div {
+  flex: 1;
+  min-width: 0;
+}
+.nm-banner > svg {
+  color: var(--accent);
+  flex: none;
+}
+.nm-banner-desc {
+  color: var(--sub);
+  font-size: var(--fs-12);
+  margin-top: 2px;
+}
+.nm-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.nm-chips-label {
+  font-size: var(--fs-12);
+  color: var(--sub);
+}
+.nm-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: var(--fs-13);
+}
+.nm-chip.on {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 700;
+}
+.nm-subs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* 没入モード: 本文だけにする（章の一覧と余白の注記を隠す。上端は layout.css の没入の規則で隠れる） */
+.immersive .reader-left .chapter-list,
+.immersive .margin-notes {
+  visibility: hidden;
+}

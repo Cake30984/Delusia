@@ -333,59 +333,6 @@
   min-height: 0;
 }
 
-.topbar {
-  height: 56px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  padding: 0 18px;
-  gap: 12px;
-  background: var(--bg-elev);
-}
-
-/* タイトルは編集可能と分かるよう hover で鉛筆＋背景を出す（F3/R8） */
-.session-title-wrap {
-  position: relative;
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-}
-.topbar .session-title {
-  font-weight: 600;
-  font-size: 15px;
-  background: transparent;
-  border: 1px solid transparent;
-  color: var(--text);
-  flex: 1;
-  min-width: 0;
-  padding: 6px 30px 6px 8px;
-  border-radius: var(--radius-sm);
-}
-.topbar .session-title:hover {
-  background: var(--bg-elev2);
-  border-color: var(--border);
-}
-.topbar .session-title:focus {
-  background: var(--bg-elev2);
-  border-color: var(--accent);
-  outline: none;
-}
-.title-pencil {
-  position: absolute;
-  right: 10px;
-  color: var(--text-faint);
-  opacity: 0;
-  pointer-events: none;
-  transition: 0.12s;
-}
-.session-title-wrap:hover .title-pencil {
-  opacity: 1;
-}
-.session-title:focus ~ .title-pencil {
-  opacity: 0;
-}
-
 .model-chip {
   font-size: 12px;
   color: var(--text-dim);
@@ -430,32 +377,6 @@
   color: var(--text);
 }
 
-/* ---------- シーンチップ（トップバー。UI-2でシーンバーから移設） ---------- */
-.scene-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--bg-elev2);
-  border: 1px solid var(--border);
-  color: var(--text-dim);
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-size: 12.5px;
-  white-space: nowrap;
-  max-width: 320px;
-  flex-shrink: 1;
-  overflow: hidden;
-}
-.scene-chip:hover {
-  border-color: var(--accent);
-  color: var(--text);
-}
-.scene-chip-title {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* ---------- 進行状態インジケータ（UI-2） ---------- */
 .activity {
   display: inline-flex;
@@ -490,11 +411,6 @@
 }
 
 /* ---------- パネル群・⋯メニューの土台（UI-2） ---------- */
-.topbar-group {
-  display: flex;
-  gap: 4px;
-  flex-shrink: 0;
-}
 .menu-anchor {
   position: relative;
   display: inline-flex;
@@ -538,30 +454,33 @@
   text-align: center;
 }
 
-/* ---------- Play 本体・右コンテキストドック（UI-3） ---------- */
-.play-body {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-}
-.play-col {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  position: relative; /* ステージ・バックドロップ（絶対配置）の基準 */
-}
+/* ---------- 右のパネル（旧ドック。P9 段3 から本文の上に重ねる。作り直しは段5） ---------- */
 .dock {
-  /* width は ui.dockWidth をインライン指定（F1）。ここでは既定の見た目だけ */
-  flex-shrink: 0;
+  /* width は ui.dockWidth をインライン指定（F1）。本文の右に重ねる */
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  max-width: 100%;
+  z-index: var(--z-dock);
+  box-shadow: -12px 0 32px rgba(0, 0, 0, 0.16);
   border-left: 1px solid var(--border);
   /* ドックの読み面は本文と同じ --bg に（ヘッダだけ chrome 色。面の階層。F5） */
   background: var(--bg);
   display: flex;
   flex-direction: column;
   min-height: 0;
-  position: relative;
   container-type: inline-size;
+}
+/* モバイルは1枚のページとして全面に（作り直しは段5） */
+.reader.mobile .dock {
+  width: auto !important;
+  left: 0;
+  box-shadow: none;
+  border-left: none;
+}
+.reader.mobile .dock-resizer {
+  display: none;
 }
 /* 左端の幅リサイズ用ハンドル（F1/A9） */
 .dock-resizer {
@@ -653,7 +572,7 @@
 .immersive .dock {
   display: none;
 }
-.immersive .main {
+.immersive .reader {
   position: relative;
 }
 .immersive .top-hover {
@@ -664,7 +583,7 @@
   height: 28px; /* バーを呼び戻すホバー当たり判定（12px では狭すぎたため拡大） */
   z-index: 21;
 }
-.immersive .topbar {
+.immersive .reader-head {
   position: absolute;
   top: 0;
   left: 0;
@@ -673,9 +592,9 @@
   transform: translateY(-100%);
   transition: transform 0.18s ease;
 }
-.immersive .top-hover:hover ~ .topbar,
-.immersive .topbar:hover,
-.immersive .topbar:focus-within {
+.immersive .top-hover:hover ~ .reader-head,
+.immersive .reader-head:hover,
+.immersive .reader-head:focus-within {
   transform: none;
 }
 
@@ -1042,24 +961,4 @@
   color: var(--text-dim);
   padding: 1px 8px;
   border-radius: 999px;
-}
-
-/* ---------- 狭い画面（スマホの縦。P5）。P9 段9で消す ----------
-   右ドックは列をやめて本文に重ねる（開閉はトップバーの既存ボタンのまま）。作り直しは段5 */
-@media (max-width: 720px) {
-  /* 右ドックは本文の上へ重ねる（列に並べると本文が残らない） */
-  .play-body {
-    position: relative;
-  }
-  .play-body > .dock {
-    position: absolute;
-    inset: 0;
-    /* 幅はインライン style の ui.dockWidth が入るので打ち消す */
-    width: auto !important;
-    z-index: 15;
-    border-left: none;
-  }
-  .play-body > .dock > .dock-resizer {
-    display: none;
-  }
 }

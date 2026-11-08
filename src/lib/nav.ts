@@ -126,6 +126,9 @@ export function goBackThen(fn?: () => void) {
   fn?.()
 }
 
+/** 物語の画面で開くもの: あらすじ・終わり方・書き出し・カセットにする・物語の設定・章の名前と状況 */
+export type ReaderModal = 'log' | 'ending' | 'export' | 'cassette' | 'editor' | 'scene'
+
 /**
  * 行き先ではない、重ねて開くもの。どの画面からも開け、App が描く
  * （物語を作ると画面が物語へ移るので、開いた画面の中に置くと一緒に消える）
@@ -139,19 +142,31 @@ export const useOverlays = create<{
   kickoffOpen: boolean
   /** 白紙から作った直後に開く物語の設定 */
   newEditorId: string | null
+  /**
+   * 物語の画面で開くもの（P9 段3）。「何をしますか」から開けるようここに置く
+   * （モバイルはメニューのページから戻ってきた物語の画面が開く）
+   */
+  readerModal: ReaderModal | null
+  /** readerModal を開いた物語（別の物語を開いたら出さない＝持ち越さない） */
+  readerModalFor: string | null
   setPaletteOpen: (open: boolean) => void
   setJobsOpen: (open: boolean) => void
   setKickoffOpen: (open: boolean) => void
   setNewEditorId: (id: string | null) => void
+  setReaderModal: (m: ReaderModal | null) => void
 }>((set) => ({
   paletteOpen: false,
   jobsOpen: false,
   kickoffOpen: false,
   newEditorId: null,
+  readerModal: null,
+  readerModalFor: null,
   setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
   setJobsOpen: (jobsOpen) => set({ jobsOpen }),
   setKickoffOpen: (kickoffOpen) => set({ kickoffOpen }),
   setNewEditorId: (newEditorId) => set({ newEditorId }),
+  setReaderModal: (readerModal) =>
+    set({ readerModal, readerModalFor: readerModal ? useStore.getState().activeId : null }),
 }))
 
 /** これより狭い幅はモバイルの骨組み（縦向きのスマートフォン）。デスクトップ版の最小幅 960px には掛からない */
