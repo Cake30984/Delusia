@@ -48,7 +48,7 @@ function ChatPanelBody({ session }: { session: Session }) {
   const scrollTarget = useStore((st) => st.scrollTarget)
   const characterDraftQueue = useStore((st) => st.characterDraftQueue)
   const { startSession, dismissCharacterDraft } = storeActions()
-  const { readerModal: openModal, readerModalFor, setReaderModal } = useOverlays()
+  const { readerModal: openModal, readerModalFor, setReaderModal, illustrateSceneId } = useOverlays()
   // 開いた物語でだけ出す（別の物語を開いたときに持ち越さない）
   const readerModal = readerModalFor === session.id ? openModal : null
   const mobile = useIsMobile()
@@ -267,6 +267,14 @@ function ChatPanelBody({ session }: { session: Session }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scrollTarget])
+
+  // 章を閉じるページの「この章の挿絵を描く」から戻ってきたら、その章の挿絵を描く画面を開く
+  useEffect(() => {
+    if (!illustrateSceneId) return
+    if (session.scenes.some((s) => s.id === illustrateSceneId)) setIllustGenFor({ sceneId: illustrateSceneId })
+    useOverlays.getState().setIllustrateSceneId(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [illustrateSceneId])
 
   // 物語を開いた直後は最新の地点を出す（App が物語ごとに key を変えるので、開くたびにここを通る）
   useEffect(() => {

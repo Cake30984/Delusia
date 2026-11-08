@@ -57,9 +57,11 @@ export type IconName =
   | 'zoom-in'
   | 'skip-forward'
   | 'home'
+  | 'chevron-left'
   | 'search'
 
 const PATHS: Record<IconName, ReactNode> = {
+  'chevron-left': <polyline points="15 18 9 12 15 6" />,
   home: (
     <>
       <path d="M3 10.5 12 3l9 7.5" />

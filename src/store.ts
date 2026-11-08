@@ -156,8 +156,9 @@ const LEGACY_DEFAULT_MODEL = 'openrouter/auto'
  * 画面の行き先（P9 段2）。UI だけの状態で保存しない。ブラウザの履歴とは `lib/nav.ts` がつなぐ。
  * - `home` ホーム（物語の一覧）／`sessions` 物語を読む画面（開く物語は `activeId`）／`new` 新しい物語を始める
  * - `characters`・`worlds`・`cassettes` 素材の3タブ／`system` 設定／`menu` 何をしますか（モバイルのページ）
+ * - `review` 章を閉じる（開いている物語の `reviewProgress`／`sceneReview` を出す。P9 段4）
  */
-export type View = 'home' | 'sessions' | 'new' | 'characters' | 'worlds' | 'cassettes' | 'system' | 'menu'
+export type View = 'home' | 'sessions' | 'new' | 'review' | 'characters' | 'worlds' | 'cassettes' | 'system' | 'menu'
 
 /** 素材（キャラクター・世界観・カセット）の画面か */
 export function isLibraryView(view: View): view is 'characters' | 'worlds' | 'cassettes' {
@@ -199,8 +200,7 @@ function mergeImageLogs(
 
 /**
  * レビュー確定で選ばれた変更を state へ適用する純関数（E2）。confirmSceneReview 内の applyState
- * クロージャをモジュールレベルへ抽出したもの。confirmSceneReview（確定）と SceneReviewModal
- * （到達プレビュー）の両方がこれを呼ぶことで、モーダルの予告と実際の発火が必ず一致する。
+ * クロージャをモジュールレベルへ抽出したもの（確定の処理と表示側の予告を一致させるため純関数にしてある）。
  * 関係性 prose は全文書き直し（aspect は aspectId 単位でマージ）、スタットは clamp 加算、
  * カウンターは累計。
  */

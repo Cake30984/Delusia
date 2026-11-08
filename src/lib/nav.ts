@@ -62,7 +62,8 @@ export function replaceNextNav() {
  * OAuth の戻りは URL を書き換えるときに history.state を空にするため）
  */
 export function startHistorySync(): () => void {
-  writeEntry(entryOf(useStore.getState(), 0), 'replace')
+  // 再読み込みしてもブラウザの履歴（とその state）は残るので、積んだ数は今の項目のものを引き継ぐ
+  writeEntry(entryOf(useStore.getState(), currentEntry()?.depth ?? 0), 'replace')
 
   const unsub = useStore.subscribe((st, prev) => {
     if (st.view === prev.view && st.activeId === prev.activeId) return
@@ -149,11 +150,14 @@ export const useOverlays = create<{
   readerModal: ReaderModal | null
   /** readerModal を開いた物語（別の物語を開いたら出さない＝持ち越さない） */
   readerModalFor: string | null
+  /** 章を閉じるページの「この章の挿絵を描く」で物語の画面へ戻ったとき、挿絵を描く章 */
+  illustrateSceneId: string | null
   setPaletteOpen: (open: boolean) => void
   setJobsOpen: (open: boolean) => void
   setKickoffOpen: (open: boolean) => void
   setNewEditorId: (id: string | null) => void
   setReaderModal: (m: ReaderModal | null) => void
+  setIllustrateSceneId: (id: string | null) => void
 }>((set) => ({
   paletteOpen: false,
   jobsOpen: false,
@@ -161,6 +165,8 @@ export const useOverlays = create<{
   newEditorId: null,
   readerModal: null,
   readerModalFor: null,
+  illustrateSceneId: null,
+  setIllustrateSceneId: (illustrateSceneId) => set({ illustrateSceneId }),
   setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
   setJobsOpen: (jobsOpen) => set({ jobsOpen }),
   setKickoffOpen: (kickoffOpen) => set({ kickoffOpen }),
@@ -184,8 +190,13 @@ export function useIsMobile(): boolean {
     const mq = window.matchMedia(MOBILE_QUERY)
     const onChange = () => setMobile(mq.matches)
     onChange()
+    // change が来ない環境（端末の幅の切り替えを真似る開発用ブラウザ等）があるので resize でも見る
     mq.addEventListener('change', onChange)
-    return () => mq.removeEventListener('change', onChange)
+    window.addEventListener('resize', onChange)
+    return () => {
+      mq.removeEventListener('change', onChange)
+      window.removeEventListener('resize', onChange)
+    }
   }, [])
   return mobile
 }

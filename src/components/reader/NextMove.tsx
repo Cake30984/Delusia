@@ -3,6 +3,7 @@ import { storeActions, useStore } from '../../store'
 import { sceneCharsOf } from '../../lib/prompts'
 import { lengthLevel } from '../../lib/tokens'
 import { useIsMobile, useOverlays } from '../../lib/nav'
+import { appConfirm } from '../../lib/dialogs'
 import type { Character, Session } from '../../types'
 import EntityAvatar from '../EntityAvatar'
 import { Icon } from '../icons'
@@ -29,6 +30,9 @@ export default function NextMove({ session, participants, groupMode, speaker, se
   const isStreaming = useStore((st) => st.isStreaming)
   const isReviewing = useStore((st) => st.isReviewing)
   const isGeneratingChoices = useStore((st) => st.isGeneratingChoices)
+  // この物語の章のまとめ（書いている最中か、確定を待っている）。章を閉じるページから「本文に戻る」で戻ったとき
+  const reviewWaiting = useStore((st) => st.sceneReview?.sessionId === session.id)
+  const reviewRunning = useStore((st) => st.reviewProgress?.sessionId === session.id)
   const {
     send,
     continueStory,
@@ -42,6 +46,7 @@ export default function NextMove({ session, participants, groupMode, speaker, se
     pickDirection,
     clearError,
     setView,
+    cancelReview,
   } = storeActions()
   const { setReaderModal } = useOverlays()
   const mobile = useIsMobile()
@@ -115,14 +120,40 @@ export default function NextMove({ session, participants, groupMode, speaker, se
     }
   }
 
+  // 章のまとめが待っている／書いている: 次の一手の先頭で知らせ、章を閉じるページへ戻れるようにする
+  const reviewBanner = (reviewWaiting || reviewRunning) && (
+    <div className="nm-banner review-waiting">
+      <Icon name="check" size={14} />
+      <div>{reviewWaiting ? 'この章のまとめができています' : 'この章をまとめています'}</div>
+      <button className="nm-link" onClick={() => setView('review')}>
+        {reviewWaiting ? 'まとめを開く' : '進み具合を見る'}
+      </button>
+      {reviewWaiting ? (
+        <button
+          className="nm-link"
+          onClick={async () => {
+            if (await appConfirm({ message: 'この章のまとめを捨てますか？\n（本文はそのまま残ります）', danger: true }))
+              cancelReview()
+          }}
+        >
+          捨てる
+        </button>
+      ) : (
+        <button className="nm-link" onClick={stopReview}>
+          止める
+        </button>
+      )}
+    </div>
+  )
+
   const closeChapter = (
     <button
       className={mobile ? 'nm-link' : 'nm-sub nm-close'}
-      onClick={() => (isReviewing ? stopReview() : prepareSceneReview())}
+      onClick={() => (reviewWaiting || isReviewing ? setView('review') : void prepareSceneReview())}
       disabled={isStreaming}
-      title={isReviewing ? 'まとめを止める' : 'この章を振り返って、次の章へ'}
+      title="この章を振り返って、次の章へ"
     >
-      {isReviewing ? '章をまとめています（止める）' : mobile ? 'この章を閉じる' : '章を閉じる'}
+      {mobile ? 'この章を閉じる' : '章を閉じる'}
     </button>
   )
 
@@ -230,6 +261,7 @@ export default function NextMove({ session, participants, groupMode, speaker, se
 
   const banners = (
     <>
+      {reviewBanner}
       {/* 締め時の提案（FB5-①c）。ペース制御ナッジと同じ閾値で「章を閉じる」を後押しする */}
       {showWrapHint && scene && (
         <div className="nm-hint">

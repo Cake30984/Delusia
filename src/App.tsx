@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { isLibraryView, storeActions, useStore } from './store'
 import ChatPanel from './components/ChatPanel'
 import { SettingsBody } from './components/SettingsModal'
@@ -8,7 +8,7 @@ import LibraryPage from './components/LibraryPage'
 import PageHeader from './components/PageHeader'
 import ModalShell from './components/ModalShell'
 import { ImageJobsBody } from './components/ImageJobsPanel'
-import SceneReviewModal from './components/SceneReviewModal'
+import ReviewPage from './components/ReviewPage'
 import SessionEditor from './components/SessionEditor'
 import StoryKickoffModal from './components/StoryKickoffModal'
 import FirstRunWizard from './components/FirstRunWizard'
@@ -65,8 +65,8 @@ export default function App() {
   const view = useStore((st) => st.view)
   const providers = useStore((st) => st.providers)
   const error = useStore((st) => st.error)
-  const sceneReview = useStore((st) => st.sceneReview)
-  const reviewProgress = useStore((st) => st.reviewProgress)
+  // 章のまとめを書き始めた物語（章を閉じるページへ移るきっかけ。P9 段4）
+  const reviewStartedFor = useStore((st) => st.reviewProgress?.sessionId ?? null)
   const imageJobToasts = useStore((st) => st.imageJobToasts)
   const infoNotice = useStore((st) => st.infoNotice)
   const schemaError = useStore((st) => st.schemaError)
@@ -249,9 +249,20 @@ export default function App() {
     return startHistorySync()
   }, [hydrated, schemaError, oauthResolved])
 
+  // 章のまとめを書き始めた瞬間に、章を閉じるページへ移る（読んでいる物語のときだけ）。
+  // 移るのは始まった瞬間の1回だけ＝「本文に戻る」で戻ったあとに引き戻さない
+  const prevReviewStarted = useRef<string | null>(null)
+  useEffect(() => {
+    const st = useStore.getState()
+    if (reviewStartedFor && !prevReviewStarted.current && reviewStartedFor === st.activeId && st.view === 'sessions') {
+      st.setView('review')
+    }
+    prevReviewStarted.current = reviewStartedFor
+  }, [reviewStartedFor])
+
   // 物語の画面を離れたら、そこで開いていたもの（あらすじ等）を閉じる。メニューのページは物語の続きなので閉じない
   useEffect(() => {
-    if (view !== 'sessions' && view !== 'menu') useOverlays.getState().setReaderModal(null)
+    if (view !== 'sessions' && view !== 'menu' && view !== 'review') useOverlays.getState().setReaderModal(null)
   }, [view])
 
   // モバイルの骨組みにいる間は「何をしますか」を重ねない（メニューのページを使う）
@@ -317,6 +328,8 @@ export default function App() {
     >
       {reading && activeId ? (
         <ChatPanel key={activeId} sessionId={activeId} />
+      ) : view === 'review' && activeId && hasActiveSession ? (
+        <ReviewPage />
       ) : view === 'new' ? (
         <NewStoryPage />
       ) : isLibraryView(view) ? (
@@ -337,11 +350,6 @@ export default function App() {
         <HomePage />
       )}
 
-      {/* レビューモーダルは、該当セッションを Play で開いている時だけ出す（FB8-B #14）。
-          他画面・他セッション表示中は sceneReview を保持したまま待たせ、戻ってきたら表示する。
-          生成中（reviewProgress）でも開く＝「シーン終了」直後にあらすじが流れ始める（PC-A A-1） */}
-      {(sceneReview?.sessionId === activeId || reviewProgress?.sessionId === activeId) &&
-        view === 'sessions' && <SceneReviewModal />}
 
 
       {showFirstRunWizard && (
