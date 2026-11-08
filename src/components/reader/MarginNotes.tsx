@@ -2,6 +2,7 @@ import { useStore } from '../../store'
 import { sceneCharsOf } from '../../lib/prompts'
 import { lengthLevel } from '../../lib/tokens'
 import { formatSessionUsage } from '../../lib/cost'
+import { openStoryPanel } from '../../lib/nav'
 import type { DockTab, Session } from '../../types'
 
 /**
@@ -11,8 +12,7 @@ import type { DockTab, Session } from '../../types'
  */
 export default function MarginNotes({ session }: { session: Session }) {
   const characters = useStore((st) => st.characters)
-  const setUiPrefs = useStore((st) => st.setUiPrefs)
-  const open = (tab: DockTab) => setUiPrefs({ dockTab: tab })
+  const open = (tab: DockTab) => openStoryPanel(tab)
 
   const st = session.state
   const scene = session.scenes.find((s) => s.id === session.currentSceneId)
@@ -56,7 +56,7 @@ export default function MarginNotes({ session }: { session: Session }) {
         </button>
       )}
       {found.length > 0 && (
-        <button className="margin-note" onClick={() => open('discovery')} title="分かったことを見る">
+        <button className="margin-note" onClick={() => open('status')} title="分かったことを見る">
           <span className="margin-note-label">分かったこと</span>
           {found.map((f, i) => (
             <span key={i} className="margin-note-line clamp">

@@ -1,7 +1,7 @@
 import { currentScene, useStore, type View } from '../store'
 import type { DockTab, Session } from '../types'
 import type { IconName } from '../components/icons'
-import { useOverlays, viewBeneathMenu, type ReaderModal } from './nav'
+import { openStoryPanel, useOverlays, viewBeneathMenu, type ReaderModal } from './nav'
 import { appConfirm } from './dialogs'
 
 /**
@@ -55,10 +55,7 @@ function openReader(modal: ReaderModal) {
 }
 
 function openDock(tab: DockTab) {
-  return () => {
-    st().setView('sessions')
-    st().setUiPrefs({ dockTab: tab })
-  }
+  return () => openStoryPanel(tab)
 }
 
 export function buildCommands(input: CommandInput): Command[] {
@@ -87,8 +84,7 @@ export function buildCommands(input: CommandInput): Command[] {
         run: () => void st().prepareSceneReview(),
       })
     }
-    list.push({ id: 'cmd:dock-status', label: 'いまの状況を見る', group: 'この物語', icon: 'bar-chart-3', run: openDock('status') })
-    list.push({ id: 'cmd:dock-discovery', label: '分かったことを見る', group: 'この物語', icon: 'book-open', run: openDock('discovery') })
+    list.push({ id: 'cmd:dock-status', label: 'いまの状況と分かったことを見る', group: 'この物語', icon: 'bar-chart-3', run: openDock('status') })
     list.push({ id: 'cmd:dock-branch', label: '分岐としおりを見る', group: 'この物語', icon: 'git-branch', run: openDock('branch') })
     list.push({ id: 'cmd:dock-gallery', label: '挿絵を見る', group: 'この物語', icon: 'image', run: openDock('gallery') })
     list.push({ id: 'cmd:log', label: 'あらすじを読む', group: 'この物語', icon: 'scroll-text', run: openReader('log') })
@@ -135,8 +131,8 @@ export function buildCommands(input: CommandInput): Command[] {
       label: `画像生成ジョブを見る（${input.imageJobCount}件）`,
       group: '移動',
       icon: 'hourglass',
-      // 物語の画面ではパネルのタブ、それ以外は重ねて開く（段5で進み具合の表示と通知に置き換える）
-      run: reading ? openDock('jobs') : () => useOverlays.getState().setJobsOpen(true),
+      // 進み具合と、できた候補から選ぶ画面（P9 段5 でパネルのタブをやめ、どの画面からも重ねて開く）
+      run: () => useOverlays.getState().setJobsOpen(true),
     })
   }
 

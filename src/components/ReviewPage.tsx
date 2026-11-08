@@ -290,7 +290,7 @@ function ReviewBody() {
   }
 
   const illustrate = () =>
-    goBackThen(() => useOverlays.getState().setIllustrateSceneId(review.sceneId))
+    goBackThen(() => useOverlays.getState().setIllustrateRequest({ sceneId: review.sceneId }))
 
   // ---- 「この章で変わったこと」を1つの一覧にまとめる（関係・気分は今の章を閉じるときだけ） ----
   const changes: { kind: ChangeKind; i: number; checked: boolean; toggle: () => void; view: JSX.Element; edit: JSX.Element }[] = []

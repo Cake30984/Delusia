@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { storeActions, useStore } from '../../store'
 import { appConfirm } from '../../lib/dialogs'
-import { useIsMobile, useOverlays } from '../../lib/nav'
+import { closeStoryPanel, openStoryPanel, useIsMobile, useOverlays } from '../../lib/nav'
 import type { DockTab } from '../../types'
 import ActivityIndicator from '../ActivityIndicator'
 import ReaderSettings from '../ReaderSettings'
@@ -27,7 +27,7 @@ export default function ReaderHeader({ sessionId, title, mode, archived, ended, 
   const mobile = useIsMobile()
   const dockTab = useStore((st) => st.ui.dockTab)
   const imageJobCount = useStore((st) => st.imageJobs.length)
-  const { setView, setUiPrefs, updateSession, deleteSession } = storeActions()
+  const { setView, updateSession, deleteSession } = storeActions()
   const { setReaderModal } = useOverlays()
   const [showMenu, setShowMenu] = useState(false)
   const [lastTab, setLastTab] = useState<DockTab>('status')
@@ -72,12 +72,14 @@ export default function ReaderHeader({ sessionId, title, mode, archived, ended, 
       </nav>
       <div className="reader-head-end">
         <ActivityIndicator />
-        {/* 状況・分岐・挿絵のパネル（今は旧ドック。作り直しは段5） */}
+        {/* 状況・分岐・挿絵のパネル（右に重ねて開く） */}
         <button
           className={'icon-btn' + (dockTab ? ' on' : '')}
           onClick={() => {
-            if (dockTab) setLastTab(dockTab)
-            setUiPrefs({ dockTab: dockTab ? null : lastTab })
+            if (dockTab) {
+              setLastTab(dockTab)
+              closeStoryPanel()
+            } else openStoryPanel(lastTab)
           }}
           title={dockTab ? 'パネルを閉じる' : '状況・分岐・挿絵を開く'}
         >

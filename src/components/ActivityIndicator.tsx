@@ -1,9 +1,11 @@
 import { memo, useState } from 'react'
 import { storeActions, useStore } from '../store'
 import MenuPopover from './MenuPopover'
+import { useOverlays } from '../lib/nav'
 
 /**
- * 本編/選択肢/レビュー/画像生成の進行状態を一元表示し、中止できるチップ。
+ * 本編/選択肢/まとめ/画像生成の進行状態を一元表示し、中止できるチップ。
+ * 描き終わって選ぶのを待っている画像もここに出し、「選ぶ」で画像生成ジョブの画面を開く（P9 段5）。
  * `memo`＝親（ChatPanelBody）の再描画では描き直さず、自分が購読している進行状態だけで動く（P2b）
  */
 function ActivityIndicator() {
@@ -15,16 +17,22 @@ function ActivityIndicator() {
   const [open, setOpen] = useState(false)
 
   const runningJobs = imageJobs.filter((j) => j.status === 'running')
-  const items: { key: string; label: string; onStop?: () => void }[] = []
-  if (isStreaming) items.push({ key: 'main', label: '本編を生成中', onStop: stop })
-  if (isReviewing) items.push({ key: 'review', label: 'レビュー作成中', onStop: stopReview })
-  if (isGeneratingChoices) items.push({ key: 'choices', label: '選択肢を考え中', onStop: stopChoices })
+  const openJobs = () => useOverlays.getState().setJobsOpen(true)
+  const items: { key: string; label: string; onStop?: () => void; onOpen?: () => void }[] = []
+  if (isStreaming) items.push({ key: 'main', label: '本文を書いています', onStop: stop })
+  if (isReviewing) items.push({ key: 'review', label: '章をまとめています', onStop: stopReview })
+  if (isGeneratingChoices) items.push({ key: 'choices', label: '展開の候補を考えています', onStop: stopChoices })
   for (const j of runningJobs) {
     items.push({
       key: j.id,
-      label: `画像を生成中 (${j.results.length}/${j.count})`,
+      label: `画像を描いています（${j.results.length}/${j.count}）`,
       onStop: () => cancelImageJob(j.id),
+      onOpen: openJobs,
     })
+  }
+  for (const j of imageJobs) {
+    if (j.status === 'selecting') items.push({ key: j.id, label: `選んでください: ${j.label}`, onOpen: openJobs })
+    if (j.status === 'error') items.push({ key: j.id, label: `描けませんでした: ${j.label}`, onOpen: openJobs })
   }
 
   if (items.length === 0) return null
@@ -42,9 +50,20 @@ function ActivityIndicator() {
           {items.map((it) => (
             <div className="activity-row" key={it.key}>
               <span>{it.label}</span>
+              {it.onOpen && (
+                <button
+                  className="link"
+                  onClick={() => {
+                    setOpen(false)
+                    it.onOpen!()
+                  }}
+                >
+                  {it.onStop ? '見る' : '選ぶ'}
+                </button>
+              )}
               {it.onStop && (
                 <button className="link" onClick={it.onStop}>
-                  中止
+                  止める
                 </button>
               )}
             </div>

@@ -732,7 +732,8 @@ export interface BranchTree {
   nodes: BranchNode[]
 }
 
-export type DockTab = 'status' | 'discovery' | 'gallery' | 'branch' | 'jobs'
+/** 状況・分岐・挿絵のパネルのタブ（P9 段5 で5つから3つにした。状況＝いまの状況＋分かったこと） */
+export type DockTab = 'status' | 'branch' | 'gallery'
 
 /** 右コンテキストドック・リーダー設定・没入モード等の永続 UI 状態（UI-3・UI-4） */
 export interface UiPrefs {
@@ -861,7 +862,9 @@ export function normalizeUiPrefs(raw: unknown): UiPrefs {
       : (widthFromScale[String(r.contentWidth)] ?? 760)
   // 旧データにはキーが無いので既定 22 で補われる（clamp が非数値を既定値へ落とす）
   const speakerIconSize = clamp(r.speakerIconSize, 16, 48, 22)
-  const validTabs: DockTab[] = ['status', 'discovery', 'gallery', 'branch', 'jobs']
+  const validTabs: DockTab[] = ['status', 'branch', 'gallery']
+  // 段5より前のタブ（発見・ジョブ）は「状況」として開く
+  const legacyTab = r.dockTab === 'discovery' || r.dockTab === 'jobs' ? 'status' : r.dockTab
   const customPalettes = normalizeCustomPalettes(r.customPalettes)
   // 消した自分の色・知らない id を指していたら既定（藍）へ戻す
   const palette =
@@ -871,7 +874,7 @@ export function normalizeUiPrefs(raw: unknown): UiPrefs {
       ? r.palette
       : DEFAULT_UI.palette
   return {
-    dockTab: validTabs.includes(r.dockTab as DockTab) ? (r.dockTab as DockTab) : null,
+    dockTab: validTabs.includes(legacyTab as DockTab) ? (legacyTab as DockTab) : null,
     dockWidth: clamp(r.dockWidth, 300, 560, 360),
     fontSize,
     lineHeight,

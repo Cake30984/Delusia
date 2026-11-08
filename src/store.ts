@@ -157,8 +157,9 @@ const LEGACY_DEFAULT_MODEL = 'openrouter/auto'
  * - `home` ホーム（物語の一覧）／`sessions` 物語を読む画面（開く物語は `activeId`）／`new` 新しい物語を始める
  * - `characters`・`worlds`・`cassettes` 素材の3タブ／`system` 設定／`menu` 何をしますか（モバイルのページ）
  * - `review` 章を閉じる（開いている物語の `reviewProgress`／`sceneReview` を出す。P9 段4）
+ * - `panel` 状況・分岐・挿絵（モバイルの1枚のページ。PC は物語の画面の右に重ねるので行き先にしない。P9 段5）
  */
-export type View = 'home' | 'sessions' | 'new' | 'review' | 'characters' | 'worlds' | 'cassettes' | 'system' | 'menu'
+export type View = 'home' | 'sessions' | 'new' | 'review' | 'panel' | 'characters' | 'worlds' | 'cassettes' | 'system' | 'menu'
 
 /** 素材（キャラクター・世界観・カセット）の画面か */
 export function isLibraryView(view: View): view is 'characters' | 'worlds' | 'cassettes' {

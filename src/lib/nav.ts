@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { create } from 'zustand'
 import { useStore, type View } from '../store'
+import type { DockTab } from '../types'
 
 /**
  * 画面の行き先とブラウザの履歴をつなぐ（P9 段2）。ルーターは入れない。
@@ -127,6 +128,14 @@ export function goBackThen(fn?: () => void) {
   fn?.()
 }
 
+/** 挿絵の画面の開き方（どの章の・どの段落の後ろに・描き直しなら元のプロンプト） */
+export interface IllustrateRequest {
+  sceneId: string
+  messageId?: string
+  regenPrompt?: string
+  regenNegative?: string
+}
+
 /** 物語の画面で開くもの: あらすじ・終わり方・書き出し・カセットにする・物語の設定・章の名前と状況 */
 export type ReaderModal = 'log' | 'ending' | 'export' | 'cassette' | 'editor' | 'scene'
 
@@ -150,14 +159,17 @@ export const useOverlays = create<{
   readerModal: ReaderModal | null
   /** readerModal を開いた物語（別の物語を開いたら出さない＝持ち越さない） */
   readerModalFor: string | null
-  /** 章を閉じるページの「この章の挿絵を描く」で物語の画面へ戻ったとき、挿絵を描く章 */
-  illustrateSceneId: string | null
+  /**
+   * 物語の画面に開かせる挿絵の画面（章を閉じるページの「この章の挿絵を描く」・パネルの挿絵の描き直し等）。
+   * 挿絵の画面は本文の文脈を組み立てる物語の画面にあるので、ほかの画面からはこれを置いて物語の画面に開かせる
+   */
+  illustrateRequest: IllustrateRequest | null
   setPaletteOpen: (open: boolean) => void
   setJobsOpen: (open: boolean) => void
   setKickoffOpen: (open: boolean) => void
   setNewEditorId: (id: string | null) => void
   setReaderModal: (m: ReaderModal | null) => void
-  setIllustrateSceneId: (id: string | null) => void
+  setIllustrateRequest: (r: IllustrateRequest | null) => void
 }>((set) => ({
   paletteOpen: false,
   jobsOpen: false,
@@ -165,8 +177,8 @@ export const useOverlays = create<{
   newEditorId: null,
   readerModal: null,
   readerModalFor: null,
-  illustrateSceneId: null,
-  setIllustrateSceneId: (illustrateSceneId) => set({ illustrateSceneId }),
+  illustrateRequest: null,
+  setIllustrateRequest: (illustrateRequest) => set({ illustrateRequest }),
   setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
   setJobsOpen: (jobsOpen) => set({ jobsOpen }),
   setKickoffOpen: (kickoffOpen) => set({ kickoffOpen }),
@@ -199,6 +211,25 @@ export function useIsMobile(): boolean {
     }
   }, [])
   return mobile
+}
+
+/**
+ * 状況・分岐・挿絵のパネルを開く（P9 段5）。PC は物語の画面の右に重ね、モバイルは1枚のページ（行き先 panel）へ行く
+ */
+export function openStoryPanel(tab: DockTab) {
+  const st = useStore.getState()
+  st.setUiPrefs({ dockTab: tab })
+  if (isMobileWidth()) {
+    if (st.view !== 'panel') st.setView('panel')
+  } else if (st.view !== 'sessions') {
+    st.setView('sessions')
+  }
+}
+
+/** パネルを閉じる。モバイルのページなら戻る */
+export function closeStoryPanel() {
+  if (useStore.getState().view === 'panel') goBack()
+  else useStore.getState().setUiPrefs({ dockTab: null })
 }
 
 /** 「何をしますか」を開く。PC は重ねて開き、モバイルはメニューのページへ行く */

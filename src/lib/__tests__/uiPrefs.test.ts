@@ -28,6 +28,14 @@ describe('normalizeUiPrefs', () => {
     expect(ui.speakerIconSize).toBe(22)
   })
 
+  it('パネルのタブは3つ。段5より前の 発見・ジョブ は 状況 として開き、知らない値は閉じる', () => {
+    expect(normalizeUiPrefs({ dockTab: 'discovery' }).dockTab).toBe('status')
+    expect(normalizeUiPrefs({ dockTab: 'jobs' }).dockTab).toBe('status')
+    expect(normalizeUiPrefs({ dockTab: 'branch' }).dockTab).toBe('branch')
+    expect(normalizeUiPrefs({ dockTab: 'gallery' }).dockTab).toBe('gallery')
+    expect(normalizeUiPrefs({ dockTab: 'foo' }).dockTab).toBeNull()
+  })
+
   describe('表示（P9）', () => {
     it('P9 より前の保存値（キーが無い）は既定の 端末に合わせる・藍・ゴシック', () => {
       const ui = normalizeUiPrefs({ dockTab: 'status', fontSize: 16 })

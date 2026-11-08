@@ -6,8 +6,8 @@ import HomePage from './components/HomePage'
 import NewStoryPage from './components/NewStoryPage'
 import LibraryPage from './components/LibraryPage'
 import PageHeader from './components/PageHeader'
-import ModalShell from './components/ModalShell'
-import { ImageJobsBody } from './components/ImageJobsPanel'
+import ImageJobsDialog from './components/ImageJobsDialog'
+import { StoryPanelPage } from './components/reader/StoryPanel'
 import ReviewPage from './components/ReviewPage'
 import SessionEditor from './components/SessionEditor'
 import StoryKickoffModal from './components/StoryKickoffModal'
@@ -32,12 +32,15 @@ function ToastItem({
   icon,
   onClose,
   autoCloseMs,
+  action,
 }: {
   className: string
   text: string
   icon?: IconName
   onClose: () => void
   autoCloseMs?: number
+  /** 通知から直接できること（例: 画像の候補を選ぶ） */
+  action?: { label: string; run: () => void }
 }) {
   useEffect(() => {
     if (!autoCloseMs) return
@@ -52,6 +55,16 @@ function ToastItem({
         {icon && <Icon name={icon} size={14} className="toast-icon" />}
         {text}
       </span>
+      {action && (
+        <button
+          onClick={() => {
+            action.run()
+            onClose()
+          }}
+        >
+          {action.label}
+        </button>
+      )}
       <button onClick={onClose}>閉じる</button>
     </div>
   )
@@ -262,7 +275,8 @@ export default function App() {
 
   // 物語の画面を離れたら、そこで開いていたもの（あらすじ等）を閉じる。メニューのページは物語の続きなので閉じない
   useEffect(() => {
-    if (view !== 'sessions' && view !== 'menu' && view !== 'review') useOverlays.getState().setReaderModal(null)
+    if (view !== 'sessions' && view !== 'menu' && view !== 'review' && view !== 'panel')
+      useOverlays.getState().setReaderModal(null)
   }, [view])
 
   // モバイルの骨組みにいる間は「何をしますか」を重ねない（メニューのページを使う）
@@ -328,6 +342,11 @@ export default function App() {
     >
       {reading && activeId ? (
         <ChatPanel key={activeId} sessionId={activeId} />
+      ) : view === 'panel' && mobile && activeId && hasActiveSession ? (
+        <StoryPanelPage />
+      ) : view === 'panel' && activeId && hasActiveSession ? (
+        // PC へ幅が広がったらパネルは物語の画面の右に出す（行き先はそのまま）
+        <ChatPanel key={activeId} sessionId={activeId} />
       ) : view === 'review' && activeId && hasActiveSession ? (
         <ReviewPage />
       ) : view === 'new' ? (
@@ -376,11 +395,7 @@ export default function App() {
 
       {paletteOpen && !mobile && <CommandPalette onClose={() => setPaletteOpen(false)} />}
 
-      {jobsOpen && (
-        <ModalShell title="画像生成ジョブ" onClose={() => setJobsOpen(false)}>
-          <ImageJobsBody />
-        </ModalShell>
-      )}
+      {jobsOpen && <ImageJobsDialog onClose={() => setJobsOpen(false)} />}
 
       <DialogHost />
 
@@ -400,9 +415,10 @@ export default function App() {
           <ToastItem
             className="toast image"
             icon="image"
-            text={`生成完了: ${imageJobToasts.map((t) => t.label).join(' / ')}`}
+            text={`できました: ${imageJobToasts.map((t) => t.label).join(' / ')}`}
             onClose={dismissImageJobToasts}
-            autoCloseMs={6000}
+            autoCloseMs={8000}
+            action={{ label: '選ぶ', run: () => setJobsOpen(true) }}
           />
         )}
       </div>

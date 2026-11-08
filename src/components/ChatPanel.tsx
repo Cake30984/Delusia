@@ -11,11 +11,9 @@ import SessionEditor from './SessionEditor'
 import SceneEditor from './SceneEditor'
 import StoryLogModal from './StoryLogModal'
 import StoryExportModal from './StoryExportModal'
-import StatusPanel from './StatusPanel'
-import DiscoveryPanel, { type DiscoveryScope } from './DiscoveryPanel'
 import CharacterDraftModal from './CharacterDraftModal'
 import CassetteEditor from './CassetteEditor'
-import ContextDock from './ContextDock'
+import StoryPanel from './reader/StoryPanel'
 import { EMPTY_MESSAGES, isMarker, SceneBlock, type MessageActions, type SessionMeta } from './reader/StoryBody'
 import NextMove from './reader/NextMove'
 import ChapterList from './reader/ChapterList'
@@ -48,13 +46,11 @@ function ChatPanelBody({ session }: { session: Session }) {
   const scrollTarget = useStore((st) => st.scrollTarget)
   const characterDraftQueue = useStore((st) => st.characterDraftQueue)
   const { startSession, dismissCharacterDraft } = storeActions()
-  const { readerModal: openModal, readerModalFor, setReaderModal, illustrateSceneId } = useOverlays()
+  const { readerModal: openModal, readerModalFor, setReaderModal, illustrateRequest } = useOverlays()
   // 開いた物語でだけ出す（別の物語を開いたときに持ち越さない）
   const readerModal = readerModalFor === session.id ? openModal : null
   const mobile = useIsMobile()
 
-  const [showStatus, setShowStatus] = useState(false)
-  const [discoveryScope, setDiscoveryScope] = useState<DiscoveryScope | null>(null)
   // 挿絵の生成対象（FB6-B。null=閉。過去の章・任意の段落をアンカーに後付け生成できる）
   const [illustGenFor, setIllustGenFor] = useState<
     { sceneId: string; messageId?: string; regenPrompt?: string; regenNegative?: string } | null
@@ -176,15 +172,6 @@ function ChatPanelBody({ session }: { session: Session }) {
     }
   }, [session.id])
 
-  // 右のパネルへ渡すコールバック（参照を固定して ContextDock の memo を効かせる）
-  const onEditStatus = useCallback(() => setShowStatus(true), [])
-  const onEditDiscovery = useCallback((scope: DiscoveryScope) => setDiscoveryScope(scope), [])
-  const onRegenerateIllustration = useCallback(
-    (sceneId: string, messageId: string | undefined, prompt: string, negative?: string) =>
-      setIllustGenFor({ sceneId, messageId, regenPrompt: prompt, regenNegative: negative }),
-    [],
-  )
-
   /** 章の一覧から: その章の見出しへ移る（畳まれていれば開いてから） */
   const jumpToChapter = useCallback(
     (sceneId: string) => {
@@ -268,13 +255,13 @@ function ChatPanelBody({ session }: { session: Session }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scrollTarget])
 
-  // 章を閉じるページの「この章の挿絵を描く」から戻ってきたら、その章の挿絵を描く画面を開く
+  // ほかの画面（章を閉じる・パネルの挿絵）から頼まれた挿絵の画面を開く
   useEffect(() => {
-    if (!illustrateSceneId) return
-    if (session.scenes.some((s) => s.id === illustrateSceneId)) setIllustGenFor({ sceneId: illustrateSceneId })
-    useOverlays.getState().setIllustrateSceneId(null)
+    if (!illustrateRequest) return
+    if (session.scenes.some((s) => s.id === illustrateRequest.sceneId)) setIllustGenFor(illustrateRequest)
+    useOverlays.getState().setIllustrateRequest(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [illustrateSceneId])
+  }, [illustrateRequest])
 
   // 物語を開いた直後は最新の地点を出す（App が物語ごとに key を変えるので、開くたびにここを通る）
   useEffect(() => {
@@ -364,14 +351,8 @@ function ChatPanelBody({ session }: { session: Session }) {
             </div>
           )}
         </div>
-        {dockOpen && (
-          <ContextDock
-            sessionId={session.id}
-            onEditStatus={onEditStatus}
-            onEditDiscovery={onEditDiscovery}
-            onRegenerateIllustration={onRegenerateIllustration}
-          />
-        )}
+        {/* 状況・分岐・挿絵（PC は右に重ねる。モバイルは1枚のページ＝行き先 panel） */}
+        {dockOpen && !mobile && <StoryPanel sessionId={session.id} />}
       </div>
 
       {readerModal === 'ending' && <EndingModal onClose={() => setReaderModal(null)} />}
@@ -386,7 +367,6 @@ function ChatPanelBody({ session }: { session: Session }) {
       )}
       {readerModal === 'cassette' && <CassetteEditor seedSession={session} onClose={() => setReaderModal(null)} />}
       {readerModal === 'export' && <StoryExportModal sessionId={session.id} onClose={() => setReaderModal(null)} />}
-      {showStatus && <StatusPanel session={session} onClose={() => setShowStatus(false)} />}
       {/* 発見キャラのキャラ化（FB7-E）。key で対象が変わるたびに起案をやり直させる */}
       {pendingDraft && (
         <CharacterDraftModal
@@ -396,9 +376,6 @@ function ChatPanelBody({ session }: { session: Session }) {
           note={pendingDraft.note}
           onClose={() => dismissCharacterDraft(session.id, pendingDraft.name)}
         />
-      )}
-      {discoveryScope && (
-        <DiscoveryPanel session={session} scope={discoveryScope} onClose={() => setDiscoveryScope(null)} />
       )}
       {illustGenFor &&
         (() => {

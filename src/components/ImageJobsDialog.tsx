@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { storeActions, useStore } from '../store'
 import { useBlobUrl } from '../lib/imageJobs'
 import ZoomOverlay from './ZoomOverlay'
+import ModalShell from './ModalShell'
 import { Icon } from './icons'
 
 /** 選択待ちの生成候補1枚（クリックで拡大・採用） */
@@ -20,8 +21,20 @@ function Candidate({ blob, busy, onUse }: { blob: Blob; busy: boolean; onUse: ()
   )
 }
 
-/** 進行中・選択待ちの画像生成ジョブ一覧本体（ドックを閉じても継続するジョブをここから採用/破棄する。UI-3でドックへ移設・モーダル版廃止） */
-export function ImageJobsBody() {
+/**
+ * 画像生成ジョブ（P9 段5 でパネルのタブをやめ、どの画面からも重ねて開く画面にした）。
+ * 開く入口は 完了の通知の「選ぶ」・上端の進み具合の表示・「何をしますか」。描いている間の進み具合もここに出る
+ */
+export default function ImageJobsDialog({ onClose }: { onClose: () => void }) {
+  return (
+    <ModalShell title="画像生成ジョブ" onClose={onClose}>
+      <ImageJobsBody />
+    </ModalShell>
+  )
+}
+
+/** 進行中・選択待ちの画像生成ジョブの一覧（描いている途中の取り消し・できた候補から採用・破棄） */
+function ImageJobsBody() {
   const imageJobs = useStore((st) => st.imageJobs)
   const { cancelImageJob, dismissImageJob, applyImageJobResult } = storeActions()
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -42,7 +55,7 @@ export function ImageJobsBody() {
   return (
     <>
       {imageJobs.length === 0 ? (
-        <p className="desc">実行中のジョブはありません。</p>
+        <p className="desc">描いている画像はありません。</p>
       ) : (
         imageJobs.map((job) => (
           <div className="field" key={job.id}>
