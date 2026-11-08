@@ -18,14 +18,25 @@ interface SessionRow {
   archived: boolean
   /** 参加キャラの id を連結したもの（行はプリミティブだけで持つ＝配列を入れると毎回不一致になる） */
   castKey: string
-  messageCount: number
+  /** 今の章が第何章か（章が無ければ 0） */
+  chapter: number
+  ended: boolean
+  updatedAt: number
+}
+
+/** 一覧の日付（今年なら月日、それ以外は年も） */
+function dateLabel(t: number): string {
+  const d = new Date(t)
+  const sameYear = d.getFullYear() === new Date().getFullYear()
+  return sameYear ? `${d.getMonth() + 1}月${d.getDate()}日` : `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`
 }
 
 /**
- * 物語の一覧（P9 段2 でサイドバーからホームへ移した）。検索・右クリックの操作・複数選択・
- * カセットの PNG の取り込みは今のまま。見た目の作り直しは段6（ホーム）
+ * ホームの「ほかの物語」（P9 段2 でサイドバーから移し、段6 で行の形をデザインに合わせた）。
+ * 1行＝題・第N章（完結）・日付・操作（⋯）。検索は物語が多いときだけ出す。
+ * 右クリックの操作・複数選択・カセットの PNG の取り込みは今のまま
  */
-export default function StoryList() {
+export default function StoryList({ excludeId }: { excludeId?: string | null }) {
   const characters = useStore((st) => st.characters)
   // 一覧が読むのは見出しだけ。**本文（messages）を購読しない**＝ストリーミングの
   // 1チャンクごとに一覧全体を描き直さない（P2b）
@@ -36,7 +47,9 @@ export default function StoryList() {
       mode: s.mode,
       archived: !!s.archived,
       castKey: s.characterIds.join('\u0000'),
-      messageCount: s.messages.length,
+      chapter: s.scenes.findIndex((sc) => sc.id === s.currentSceneId) + 1,
+      ended: !!s.ending,
+      updatedAt: s.updatedAt,
     })),
   )
   const { setActive, updateSession, deleteSession, importCassette } = storeActions()
@@ -77,7 +90,11 @@ export default function StoryList() {
     )
   }
   const archivedCount = rows.filter((s) => s.archived).length
-  const visible = rows.filter((s) => (showArchived || !s.archived) && matchesQuery(s))
+  // 新しく触ったものから。「続きから」に出している物語は除く
+  const visible = rows
+    .filter((s) => s.id !== excludeId && (showArchived || !s.archived) && matchesQuery(s))
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+  const showSearch = rows.length > 6
 
   const { selected, clear, handleClick, selectForContext } = useMultiSelect(visible.map((s) => s.id))
 
@@ -113,6 +130,7 @@ export default function StoryList() {
       {...dropProps}
       style={dragOver ? { outline: '2px dashed var(--accent)', outlineOffset: -4 } : undefined}
     >
+      {showSearch && (
       <div className="story-list-search">
         <input
           className="model-search"
@@ -121,6 +139,7 @@ export default function StoryList() {
           onChange={(e) => setQuery(e.target.value)}
         />
       </div>
+      )}
 
       {selected.size >= 2 && (
         <div className="sidebar-sel-bar">
@@ -137,12 +156,7 @@ export default function StoryList() {
 
       <div className="session-list">
         {notice && <p style={{ color: 'var(--accent)', fontSize: 13, padding: '4px 12px' }}>{notice}</p>}
-        {rows.length === 0 && (
-          <p style={{ color: 'var(--text-faint)', fontSize: 14, padding: '8px 12px' }}>まだ物語がありません。</p>
-        )}
-        {rows.length > 0 && visible.length === 0 && (
-          <p style={{ color: 'var(--text-faint)', fontSize: 14, padding: '8px 12px' }}>見つかりません。</p>
-        )}
+        {q && visible.length === 0 && <p className="story-list-empty">見つかりません。</p>}
         {visible.map((s) => {
           const cast = castIdsOf(s)
             .map((id) => characters.find((c) => c.id === id)?.name)
@@ -163,13 +177,13 @@ export default function StoryList() {
                 setCtxMenu({ id: s.id, x: e.clientX, y: e.clientY })
               }}
             >
-              <div className="title">{s.title || '無題'}</div>
-              <div className="meta">
-                <span className={'badge ' + s.mode}>{s.mode === 'roleplay' ? 'ロールプレイ' : '物語'}</span>
-                {s.archived && <span className="badge">アーカイブ</span>}
-                {cast.length > 0 && <span className="cast">{cast.join('・')}</span>}
-                <span title="この物語の発言数">発言 {s.messageCount}</span>
-              </div>
+              <span className="story-row-title" title={cast.length > 0 ? cast.join('・') : undefined}>
+                {s.title || '無題'}
+                {s.mode === 'roleplay' && <small className="story-row-tag">ロールプレイ</small>}
+                {s.archived && <small className="story-row-tag">アーカイブ</small>}
+              </span>
+              <small className="story-row-chapter">{s.ended ? '完結' : s.chapter > 0 ? `第${s.chapter}章` : ''}</small>
+              <small className="story-row-date">{dateLabel(s.updatedAt)}</small>
               {/* 右クリックが無い端末（タッチ）向けの入口。右クリックと同じメニューを開く */}
               <button
                 className="icon-btn small session-item-more"

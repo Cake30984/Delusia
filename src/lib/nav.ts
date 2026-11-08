@@ -128,6 +128,43 @@ export function goBackThen(fn?: () => void) {
   fn?.()
 }
 
+/** 新しい物語の始め方（統合案2）: 一行から・カセットから・白紙から */
+export type NewStoryWay = 'line' | 'cassette' | 'blank'
+
+let kickoffController: AbortController | null = null
+
+/**
+ * 一行から始める（P4 の起案）。世界観・登場人物・導入を1呼び出しで起案し、終わったら物語の設定を開く
+ * （ここで本文は書き始めない。人が直して「保存」してから始める）。**画面を離れても続く**
+ * ＝起案中に別の画面へ行っても、終わればその場で設定が開く（App が描く）
+ */
+export async function startKickoff(premise: string) {
+  const line = premise.trim()
+  if (!line || useOverlays.getState().kickoffPremise !== null) return
+  const controller = new AbortController()
+  kickoffController = controller
+  useOverlays.setState({ kickoffPremise: line })
+  try {
+    const res = await useStore.getState().kickoffStory(line, controller.signal)
+    if (controller.signal.aborted || !res.sessionId) return
+    useOverlays
+      .getState()
+      .setNewEditorId(
+        res.sessionId,
+        res.error ||
+          '一行から起案した下書きです。世界観・登場人物・導入は「保存」する前に直せます（保存した素材はキャラクターと世界観に「起案」の印つきで残ります）。',
+      )
+  } finally {
+    if (kickoffController === controller) kickoffController = null
+    useOverlays.setState({ kickoffPremise: null })
+  }
+}
+
+/** 起案を止める（止められたら素材も物語も作らない） */
+export function stopKickoff() {
+  kickoffController?.abort()
+}
+
 /** 挿絵の画面の開き方（どの章の・どの段落の後ろに・描き直しなら元のプロンプト） */
 export interface IllustrateRequest {
   sceneId: string
@@ -148,10 +185,14 @@ export const useOverlays = create<{
   paletteOpen: boolean
   /** 画像生成ジョブ（物語の画面の外から見るとき） */
   jobsOpen: boolean
-  /** 一行から始める（起案が終わると自分で物語の設定を開く） */
-  kickoffOpen: boolean
+  /** 一行から始める（起案）を走らせている前提。null なら走っていない（P9 段6） */
+  kickoffPremise: string | null
+  /** 新しい物語を始めるページで最初に開く始め方 */
+  newStoryWay: NewStoryWay
   /** 白紙から作った直後に開く物語の設定 */
   newEditorId: string | null
+  /** その設定の冒頭に出す案内（一行から起案した下書きです、起案できなかった理由など） */
+  newEditorNotice: string
   /**
    * 物語の画面で開くもの（P9 段3）。「何をしますか」から開けるようここに置く
    * （モバイルはメニューのページから戻ってきた物語の画面が開く）
@@ -166,23 +207,25 @@ export const useOverlays = create<{
   illustrateRequest: IllustrateRequest | null
   setPaletteOpen: (open: boolean) => void
   setJobsOpen: (open: boolean) => void
-  setKickoffOpen: (open: boolean) => void
-  setNewEditorId: (id: string | null) => void
+  setNewStoryWay: (way: NewStoryWay) => void
+  setNewEditorId: (id: string | null, notice?: string) => void
   setReaderModal: (m: ReaderModal | null) => void
   setIllustrateRequest: (r: IllustrateRequest | null) => void
 }>((set) => ({
   paletteOpen: false,
   jobsOpen: false,
-  kickoffOpen: false,
+  kickoffPremise: null,
+  newStoryWay: 'line',
   newEditorId: null,
+  newEditorNotice: '',
   readerModal: null,
   readerModalFor: null,
   illustrateRequest: null,
   setIllustrateRequest: (illustrateRequest) => set({ illustrateRequest }),
   setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
   setJobsOpen: (jobsOpen) => set({ jobsOpen }),
-  setKickoffOpen: (kickoffOpen) => set({ kickoffOpen }),
-  setNewEditorId: (newEditorId) => set({ newEditorId }),
+  setNewStoryWay: (newStoryWay) => set({ newStoryWay }),
+  setNewEditorId: (newEditorId, notice) => set({ newEditorId, newEditorNotice: notice ?? '' }),
   setReaderModal: (readerModal) =>
     set({ readerModal, readerModalFor: readerModal ? useStore.getState().activeId : null }),
 }))

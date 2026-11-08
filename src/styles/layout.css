@@ -105,98 +105,387 @@
   border-bottom-color: var(--accent);
 }
 
-/* ホーム（段2 の仮の形。作り直しは段6） */
+/* ホーム（P9 段6。続きから・新しい物語を始める・ほかの物語） */
+.home {
+  max-width: 720px;
+  margin: 0 auto;
+  padding-top: var(--sp-2);
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+.app.mobile .home {
+  gap: 28px;
+  padding-top: 0;
+}
 .home-notice {
   border: 1px solid var(--line);
   border-radius: var(--r-card-lg);
   padding: var(--sp-4);
-  margin-bottom: var(--sp-5);
   background: var(--tint);
 }
 .home-notice p {
   margin: 0 0 var(--sp-3);
   font-size: var(--fs-14);
 }
-.home-actions,
-.new-story-options {
-  display: grid;
-  gap: var(--sp-3);
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+.home-label {
+  display: block;
+  font-size: var(--fs-12);
+  color: var(--sub);
+  margin-bottom: 10px;
 }
-.new-story-options {
-  grid-template-columns: minmax(0, 1fr);
+.home-label.inline {
+  margin: 0;
 }
-.home-card {
+.home-continue {
+  padding: var(--sp-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--tint);
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: var(--sp-1);
-  text-align: left;
-  min-height: 72px;
-  padding: var(--sp-4);
-  border-radius: var(--r-card-lg);
-  border: 1px solid var(--line);
-  background: var(--bg);
-  color: var(--ink);
+  gap: 14px;
 }
-.home-card:hover {
-  border-color: var(--accent);
+.app.mobile .home-continue {
+  padding: 18px;
+  gap: 12px;
 }
-.home-card.primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--on-accent);
+.home-continue-head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  min-width: 0;
 }
-.home-card-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--fs-15);
+.home-continue-title {
+  margin: 0;
+  font-size: 24px;
   font-weight: 700;
-}
-.home-card.primary .home-card-label {
-  font-size: var(--fs-13);
-  font-weight: 400;
-}
-.home-card-title {
-  font-size: var(--fs-20);
-  font-weight: 700;
-  max-width: 100%;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.home-card-sub {
+.app.mobile .home-continue-title {
+  font-size: 21px;
+}
+.home-continue-chapter {
   font-size: var(--fs-13);
   color: var(--sub);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.home-section-title {
-  font-size: var(--fs-14);
+.home-excerpt {
+  margin: 0;
+  font-family: var(--font-prose);
+  font-size: var(--fs-15);
+  line-height: 1.9;
   color: var(--sub);
+}
+.app.mobile .home-excerpt {
+  font-size: var(--fs-14);
+  line-height: 1.8;
+}
+.home-continue-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+}
+.app.mobile .home-continue-foot .nm-primary {
+  width: 100%;
+  height: 52px;
+  font-size: var(--fs-17);
+}
+.home-when {
+  font-size: var(--fs-12);
+  color: var(--sub);
+}
+.home-oneline {
+  display: flex;
+  gap: 10px;
+}
+.home-oneline input {
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  padding: 0 var(--sp-4);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-card);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: var(--fs-15);
+}
+.home-oneline.mobile input {
+  font-size: var(--fs-16);
+}
+.home-begin {
+  height: 48px;
+  padding: 0 22px;
+  border: 1px solid var(--ink);
+  border-radius: var(--r-card);
+  background: transparent;
+  color: var(--ink);
+  font-size: var(--fs-15);
   font-weight: 700;
-  margin: var(--sp-6) 0 var(--sp-2);
+  white-space: nowrap;
+}
+.home-begin:hover:not(:disabled) {
+  background: var(--tint);
+}
+.home-begin:disabled {
+  opacity: 0.5;
+}
+.home-ways {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.app.mobile .home-ways {
+  justify-content: space-between;
+}
+.app.mobile .home-ways .home-begin {
+  height: 44px;
+  border-radius: var(--r-pill);
+}
+.home-foot {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+  padding: var(--sp-4) 0;
 }
 
-/* 物語の一覧（サイドバーから移した。作り直しは段6） */
-.story-list {
-  border: 1px solid var(--line);
-  border-radius: var(--r-card-lg);
-  overflow: hidden;
-}
+/* ほかの物語（1行＝題・第N章・日付・⋯） */
 .story-list .session-list {
-  padding: var(--sp-2);
+  padding: 0;
 }
 .story-list .session-item {
   position: relative;
-  padding: 10px 44px 10px 12px;
-  min-height: var(--tap);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--sp-4);
+  min-height: 64px;
+  padding: 0 44px 0 4px;
+  margin: 0;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  cursor: pointer;
+}
+.app.mobile .story-list .session-item {
+  min-height: 60px;
+  gap: var(--sp-3);
+}
+.story-list .session-item:hover {
+  background: var(--tint);
+}
+.story-row-title {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-15);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.story-row-tag {
+  margin-left: var(--sp-2);
+  font-size: var(--fs-12);
+  color: var(--sub);
+  font-weight: 400;
+}
+.story-row-chapter,
+.story-row-date {
+  font-size: var(--fs-12);
+  color: var(--sub);
+  white-space: nowrap;
+}
+.story-row-date {
+  width: 96px;
+  text-align: right;
+}
+.app.mobile .story-row-date {
+  display: none;
+}
+.story-list-empty {
+  color: var(--sub);
+  font-size: var(--fs-14);
+  padding: var(--sp-2) 4px;
 }
 /* .icon-btn の position: relative より強くする */
 .story-list .session-item-more {
   position: absolute;
   top: 50%;
-  right: 6px;
+  right: 4px;
   transform: translateY(-50%);
+}
+
+/* 新しい物語を始める（P9 段6。PC は左に始め方・右に中身、モバイルは上の切り替え） */
+.new-grid {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding-top: var(--sp-2);
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  column-gap: 48px;
+}
+.new-ways {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.new-title {
+  margin: 0 0 14px;
+  font-size: var(--fs-26);
+  font-weight: 700;
+}
+.new-way {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card-lg);
+  background: var(--bg);
+  color: var(--ink);
+  text-align: left;
+  font-size: var(--fs-15);
+  font-weight: 700;
+}
+.new-way small {
+  font-size: var(--fs-12);
+  font-weight: 400;
+  color: var(--sub);
+}
+.new-way.on {
+  border: 2px solid var(--accent);
+  padding: 15px 17px;
+  background: var(--tint);
+}
+.new-body {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  min-width: 0;
+}
+.new-page.mobile .new-body {
+  gap: 18px;
+  padding-top: var(--sp-1);
+}
+.new-label {
+  display: block;
+  font-size: var(--fs-13);
+  color: var(--sub);
+  margin-bottom: 8px;
+}
+.new-field {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid var(--edge);
+  border-radius: var(--r-input);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: var(--fs-15);
+  line-height: 1.8;
+  resize: none;
+}
+.new-page.mobile .new-field {
+  font-size: var(--fs-16);
+}
+.new-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.new-chip {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: var(--fs-13);
+}
+.new-page.mobile .new-chip {
+  min-height: 40px;
+}
+.new-chip:hover {
+  border-color: var(--edge);
+}
+.new-go {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding-top: 6px;
+}
+.new-sample {
+  align-self: flex-start;
+}
+.new-premise {
+  margin: 0;
+  font-size: var(--fs-16);
+  line-height: 1.8;
+}
+.new-radios {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.new-cassettes {
+  display: flex;
+  flex-direction: column;
+}
+.new-cassette {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--line);
+}
+.new-cassette-cover {
+  width: 64px;
+  height: 64px;
+  flex: none;
+  border-radius: var(--r-card);
+  background: var(--tint);
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+  color: var(--sub);
+  overflow: hidden;
+}
+.new-cassette-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.new-cassette-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.new-cassette-body b {
+  font-size: var(--fs-15);
+}
+.new-cassette-body span {
+  font-size: var(--fs-13);
+  color: var(--sub);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.new-page .panel-seg {
+  margin-top: var(--sp-1);
+}
+.review-desc.center {
+  text-align: center;
+  margin-top: 8px;
 }
 
 /* モバイルの「何をしますか」のページ */

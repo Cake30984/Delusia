@@ -10,7 +10,6 @@ import ImageJobsDialog from './components/ImageJobsDialog'
 import { StoryPanelPage } from './components/reader/StoryPanel'
 import ReviewPage from './components/ReviewPage'
 import SessionEditor from './components/SessionEditor'
-import StoryKickoffModal from './components/StoryKickoffModal'
 import FirstRunWizard from './components/FirstRunWizard'
 import WebStorageNotice from './components/WebStorageNotice'
 import DialogHost from './components/DialogHost'
@@ -93,8 +92,8 @@ export default function App() {
   // hasUsableProvider を空キーのまま評価して System へ誤って飛ばさないためのゲート
   // （Web では hydrateProviderSecrets が即resolveするため体感の遅延はない）
   const [secretsReady, setSecretsReady] = useState(false)
-  // 画面をまたいで重ねて開くもの（何をしますか・ジョブ・一行から・白紙から作った直後の設定）
-  const { paletteOpen, setPaletteOpen, jobsOpen, setJobsOpen, kickoffOpen, setKickoffOpen, newEditorId, setNewEditorId } =
+  // 画面をまたいで重ねて開くもの（何をしますか・ジョブ・一行から／白紙から作った直後の物語の設定）
+  const { paletteOpen, setPaletteOpen, jobsOpen, setJobsOpen, newEditorId, newEditorNotice, setNewEditorId } =
     useOverlays()
   const newEditorSession = useStore((st) =>
     newEditorId ? st.sessions.find((s) => s.id === newEditorId) : undefined,
@@ -388,10 +387,8 @@ export default function App() {
       )}
 
       {newEditorSession && (
-        <SessionEditor session={newEditorSession} onClose={() => setNewEditorId(null)} />
+        <SessionEditor session={newEditorSession} notice={newEditorNotice || undefined} onClose={() => setNewEditorId(null)} />
       )}
-
-      {kickoffOpen && <StoryKickoffModal onClose={() => setKickoffOpen(false)} />}
 
       {paletteOpen && !mobile && <CommandPalette onClose={() => setPaletteOpen(false)} />}
 

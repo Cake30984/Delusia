@@ -379,7 +379,7 @@ export default function SessionEditor({ session, notice, onClose }: Props) {
                 <label>新しい登場人物</label>
                 <div className="desc">
                   登場キャラクターに登録していない人物を AI が新しく出してよいかを指示します。
-                  出てきた人物は本文の話者に付く印から、あるいはシーン終了レビューの提案から、
+                  出てきた人物は本文の話者に付く印から、あるいは章を閉じるときの提案から、
                   キャラクターとして登録できます。
                 </div>
                 <div className="seg">
