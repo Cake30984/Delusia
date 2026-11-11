@@ -12,6 +12,8 @@ import type { DockTab } from '../types'
 interface NavEntry {
   view: View
   activeId: string | null
+  /** 画面の中のページ（表示と設定の項目。P9 段8）。無ければ null */
+  sub?: string | null
   /** アプリを開いてから積んだ数。0 なら一つ前はこのアプリの画面ではない */
   depth: number
 }
@@ -31,12 +33,29 @@ export function viewBeneathMenu(): View {
 }
 
 function entryOf(st: { view: View; activeId: string | null }, depth: number): NavEntry {
+  const sub = useOverlays.getState().subPage
   // 物語の画面以外では、開いている物語は行き先の一部ではない（戻ったときに物語を切り替えない）
-  return { view: st.view, activeId: st.view === 'sessions' ? st.activeId : null, depth }
+  return {
+    view: st.view,
+    activeId: st.view === 'sessions' ? st.activeId : null,
+    sub: sub && sub.view === st.view ? sub.id : null,
+    depth,
+  }
 }
 
 function sameEntry(a: NavEntry | undefined, b: NavEntry): boolean {
-  return !!a && a.view === b.view && a.activeId === b.activeId
+  return !!a && a.view === b.view && a.activeId === b.activeId && (a.sub ?? null) === (b.sub ?? null)
+}
+
+/** 履歴へ積む（行き先か画面の中のページが変わったとき） */
+function pushCurrent() {
+  const mode = replaceNext ? 'replace' : 'push'
+  replaceNext = false
+  const cur = currentEntry()
+  const depth = cur?.depth ?? 0
+  const next = entryOf(useStore.getState(), mode === 'push' ? depth + 1 : depth)
+  if (sameEntry(cur, next)) return
+  writeEntry(next, mode)
 }
 
 function currentEntry(): NavEntry | undefined {
@@ -70,13 +89,18 @@ export function startHistorySync(): () => void {
     if (st.view === prev.view && st.activeId === prev.activeId) return
     if (st.view === 'menu' && prev.view !== 'menu') beneathMenu = prev.view
     if (applyingPop) return
-    const mode = replaceNext ? 'replace' : 'push'
-    replaceNext = false
-    const cur = currentEntry()
-    const depth = cur?.depth ?? 0
-    const next = entryOf(st, mode === 'push' ? depth + 1 : depth)
-    if (sameEntry(cur, next)) return
-    writeEntry(next, mode)
+    // 別の画面へ移ったら、前の画面の中のページは忘れる（次に開いたときは最初のページから）
+    const sub = useOverlays.getState().subPage
+    if (sub && sub.view !== st.view) {
+      applyingPop = true
+      useOverlays.setState({ subPage: null })
+      applyingPop = false
+    }
+    pushCurrent()
+  })
+  const unsubOverlay = useOverlays.subscribe((o, prev) => {
+    if (o.subPage === prev.subPage || applyingPop) return
+    pushCurrent()
   })
 
   const onPop = (e: PopStateEvent) => {
@@ -92,6 +116,7 @@ export function startHistorySync(): () => void {
       } else {
         useStore.setState({ view: entry.view })
       }
+      useOverlays.setState({ subPage: entry.sub ? { view: entry.view, id: entry.sub } : null })
     } finally {
       applyingPop = false
     }
@@ -102,6 +127,7 @@ export function startHistorySync(): () => void {
   window.addEventListener('popstate', onPop)
   return () => {
     unsub()
+    unsubOverlay()
     window.removeEventListener('popstate', onPop)
   }
 }
@@ -207,6 +233,13 @@ export const useOverlays = create<{
   illustrateRequest: IllustrateRequest | null
   /** キャラクターと世界観のページで開くもの（物語の画面から登場人物を直接開く。P9 段7） */
   libraryFocusId: string | null
+  /**
+   * 画面の中のページ（P9 段8。表示と設定の項目）。行き先と同じく履歴に積む＝戻るで1つ前の項目へ。
+   * view が今の行き先と違えば無いものとして扱う
+   */
+  subPage: { view: View; id: string } | null
+  /** 色を作る画面で直す自分の色（null なら新しく作る） */
+  colorEditId: string | null
   setPaletteOpen: (open: boolean) => void
   setJobsOpen: (open: boolean) => void
   setNewStoryWay: (way: NewStoryWay) => void
@@ -225,6 +258,8 @@ export const useOverlays = create<{
   readerModalFor: null,
   illustrateRequest: null,
   libraryFocusId: null,
+  subPage: null,
+  colorEditId: null,
   setLibraryFocusId: (libraryFocusId) => set({ libraryFocusId }),
   setIllustrateRequest: (illustrateRequest) => set({ illustrateRequest }),
   setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
@@ -284,6 +319,18 @@ export function openInLibrary(kind: 'characters' | 'worlds', id: string) {
 export function closeStoryPanel() {
   if (useStore.getState().view === 'panel') goBack()
   else useStore.getState().setUiPrefs({ dockTab: null })
+}
+
+/** 表示と設定を開く。section を渡すとその項目を開く（PC は左の一覧のその項目、モバイルはその項目の1枚） */
+export function openSettings(section?: string) {
+  useOverlays.setState({ subPage: section ? { view: 'system', id: section } : null })
+  useStore.getState().setView('system')
+}
+
+/** 色を作る画面を開く。id を渡すとその自分の色を直す */
+export function openColorEditor(id: string | null) {
+  useOverlays.setState({ colorEditId: id })
+  useStore.getState().setView('color')
 }
 
 /** 「何をしますか」を開く。PC は重ねて開き、モバイルはメニューのページへ行く */

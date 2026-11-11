@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { storeActions, useStore } from '../../store'
 import { sceneCharsOf } from '../../lib/prompts'
 import { lengthLevel } from '../../lib/tokens'
-import { useIsMobile, useOverlays } from '../../lib/nav'
+import { useIsMobile, useOverlays, openSettings } from '../../lib/nav'
 import { appConfirm } from '../../lib/dialogs'
 import type { Character, Session } from '../../types'
 import EntityAvatar from '../EntityAvatar'
@@ -191,7 +191,7 @@ export default function NextMove({ session, participants, groupMode, speaker, se
           もう一度
         </button>
         <div className="nm-row-between">
-          <button className="nm-link" onClick={() => setView('system')}>
+          <button className="nm-link" onClick={() => openSettings('writer')}>
             接続先を確かめる
           </button>
           <details className="nm-details">

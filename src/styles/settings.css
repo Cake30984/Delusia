@@ -1,0 +1,907 @@
+/* ---------- 表示と設定（P9 段8。PC は左に項目の一覧＋右に中身、モバイルは表示＋項目ごとの1枚） ---------- */
+.set-layout {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 20px var(--sp-6) 0;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  column-gap: 48px;
+}
+.set-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+}
+.set-nav-item {
+  min-height: 40px;
+  padding: 0 14px;
+  border: none;
+  border-radius: var(--r-input);
+  background: transparent;
+  color: var(--ink);
+  font-size: var(--fs-14);
+  text-align: left;
+}
+.set-nav-item:hover {
+  background: var(--tint);
+}
+.set-nav-item.on {
+  background: var(--tint);
+  font-weight: 700;
+}
+.set-main {
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  padding-bottom: var(--sp-6);
+}
+.set-title {
+  margin: 0;
+  font-size: var(--fs-20);
+  font-weight: 700;
+}
+.set-title.big {
+  font-size: var(--fs-26);
+}
+.set-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--sp-2) 18px var(--sp-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+.set-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+.set-h2 {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  margin: 0 0 4px;
+  font-size: var(--fs-14);
+  font-weight: 700;
+}
+.set-h2 span {
+  font-weight: 400;
+  font-size: var(--fs-13);
+  color: var(--sub);
+}
+.set-page.mobile .set-h2 {
+  font-size: var(--fs-13);
+  color: var(--sub);
+}
+.set-h2-link {
+  margin-left: var(--sp-2);
+  font-weight: 400;
+}
+.set-desc {
+  margin: 0;
+  font-size: var(--fs-13);
+  line-height: 1.7;
+  color: var(--sub);
+}
+.set-desc a {
+  color: var(--accent);
+}
+.set-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: var(--fs-13);
+  color: var(--sub);
+}
+.set-input {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border: 1px solid var(--edge);
+  border-radius: var(--r-input);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: var(--fs-14);
+}
+textarea.set-input {
+  height: auto;
+  padding: 10px 12px;
+  line-height: 1.7;
+  resize: vertical;
+}
+.set-page.mobile .set-input,
+.onb-page.mobile .set-input {
+  font-size: var(--fs-16);
+}
+.set-input-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.set-input-row .btn {
+  flex: none;
+  height: 44px;
+}
+.set-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.set-wide-btn {
+  width: 100%;
+}
+
+/* 明るさ（3つの切り替え） */
+.set-seg {
+  display: inline-flex;
+  align-self: flex-start;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--r-card);
+  background: var(--tint);
+}
+.set-seg.wide {
+  display: flex;
+  align-self: stretch;
+}
+.set-seg-btn {
+  height: 40px;
+  padding: 0 18px;
+  border: none;
+  border-radius: var(--r-input);
+  background: transparent;
+  color: var(--ink);
+  font-size: var(--fs-14);
+}
+.set-seg.wide .set-seg-btn {
+  flex: 1;
+  padding: 0 8px;
+}
+.set-seg-btn.on {
+  background: var(--bg);
+  font-weight: 700;
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+/* 色の一覧。見本はその色の変数をボタンの中だけに当てて描く */
+.set-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.set-swatch {
+  width: 104px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card-lg);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: var(--fs-13);
+  text-align: left;
+}
+.set-swatch.on {
+  border: 2px solid var(--accent);
+  padding: 7px;
+}
+.set-swatch .set-swatch-pv {
+  height: 48px;
+  box-sizing: border-box;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.set-swatch .set-swatch-pv b {
+  display: block;
+  height: 4px;
+  width: 70%;
+  border-radius: 2px;
+  background: var(--ink);
+}
+.set-swatch .set-swatch-pv u {
+  display: block;
+  height: 12px;
+  width: 40px;
+  border-radius: 6px;
+  background: var(--accent);
+}
+.set-swatch-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.set-swatch.add {
+  justify-content: center;
+  align-items: center;
+  min-height: 92px;
+  border-style: dashed;
+  border-color: var(--edge);
+  background: transparent;
+  color: var(--accent);
+}
+/* モバイルは丸の見本を横に流す */
+.set-dots {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  margin-right: -18px;
+  padding: 2px 18px 4px 2px;
+}
+.set-dot {
+  flex: none;
+  width: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font-size: var(--fs-12);
+}
+.set-dot .set-swatch-pv {
+  width: 48px;
+  height: 48px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+}
+.set-dot .set-swatch-pv u {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.set-dot.on .set-swatch-pv {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.set-dot .set-swatch-name {
+  max-width: 56px;
+}
+.set-dot.add .set-swatch-pv {
+  border-style: dashed;
+  border-color: var(--edge);
+}
+
+/* 本文の書体 */
+.set-fonts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.set-fonts.column {
+  flex-direction: column;
+}
+.set-font {
+  width: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card-lg);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: var(--fs-12);
+  text-align: left;
+}
+.set-fonts.column .set-font {
+  width: auto;
+}
+.set-font.on {
+  border: 2px solid var(--accent);
+  padding: 11px 13px;
+}
+.set-font-sample {
+  font-size: var(--fs-17);
+  line-height: 1.6;
+}
+.set-font small {
+  color: var(--sub);
+  font-size: var(--fs-12);
+}
+
+/* 本文の大きさ */
+.set-range {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr) 60px;
+  align-items: center;
+  gap: 16px;
+  min-height: 44px;
+  font-size: var(--fs-14);
+}
+.set-page.mobile .set-range {
+  grid-template-columns: 84px minmax(0, 1fr) 40px;
+  gap: 12px;
+  min-height: 52px;
+  font-size: var(--fs-15);
+}
+.set-range input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+.set-range small {
+  color: var(--sub);
+  font-size: var(--fs-13);
+  text-align: right;
+}
+.set-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: var(--fs-14);
+  color: var(--ink);
+}
+.set-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+.set-reset {
+  align-self: flex-start;
+}
+.set-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-3);
+  min-height: 52px;
+  padding: 0;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  font-size: var(--fs-15);
+  text-align: left;
+}
+.set-section > .set-link:first-of-type,
+.set-range + .set-link {
+  border-top: 1px solid var(--line);
+}
+.set-link small {
+  min-width: 0;
+  font-size: var(--fs-12);
+  color: var(--sub);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.set-sample {
+  margin-top: var(--sp-2);
+  padding: 14px 16px;
+  border-radius: var(--r-card);
+  background: var(--tint);
+  font-family: var(--font-prose);
+  font-size: var(--fs-16);
+  line-height: 1.9;
+}
+
+/* 接続先 */
+.set-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card-lg);
+  background: var(--bg);
+}
+.set-card-top {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.set-kind {
+  flex: none;
+  padding: 2px 10px;
+  border-radius: var(--r-pill);
+  background: var(--tint);
+  color: var(--sub);
+  font-size: var(--fs-12);
+  white-space: nowrap;
+}
+.set-result {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--r-input);
+  background: var(--tint);
+  font-size: var(--fs-13);
+  line-height: 1.65;
+}
+.set-result.ok {
+  color: var(--ink);
+}
+.set-result.bad {
+  color: var(--danger);
+}
+.set-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.set-section > .lib-create {
+  align-self: flex-start;
+}
+.set-total {
+  margin: 0;
+  font-size: var(--fs-15);
+}
+.set-total b {
+  font-size: var(--fs-20);
+}
+.set-table-wrap {
+  overflow-x: auto;
+}
+.set-page.mobile .set-card {
+  padding: 14px;
+}
+.set-page.mobile .set-input-row {
+  flex-wrap: wrap;
+}
+.set-page.mobile .set-input-row .set-input {
+  flex: 1 1 100%;
+}
+
+/* 挿絵の接続先は旧画面の欄のまま（段9で作り直す）。見出しは項目の名前と重なるので隠す */
+.set-legacy > .field {
+  margin: 0;
+}
+.set-legacy > .field > label:first-child {
+  display: none;
+}
+
+/* ---------- 色を作る ---------- */
+.color-layout {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 20px var(--sp-6) 0;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 460px minmax(0, 1fr);
+  column-gap: 56px;
+}
+.color-main {
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-bottom: 28px;
+}
+.color-aside {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 28px;
+}
+.color-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 8px;
+}
+.color-tab {
+  height: 40px;
+  padding: 0 16px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--sub);
+  font-size: var(--fs-14);
+}
+.color-tab.on {
+  color: var(--ink);
+  font-weight: 700;
+  border-bottom-color: var(--accent);
+}
+.color-field {
+  display: grid;
+  grid-template-columns: 120px 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  font-size: var(--fs-14);
+}
+.color-page.mobile .color-field {
+  grid-template-columns: 92px 44px minmax(0, 1fr) auto;
+  gap: 10px;
+  font-size: var(--fs-15);
+}
+.color-field input[type='color'] {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--edge);
+  border-radius: var(--r-input);
+  background: transparent;
+  cursor: pointer;
+}
+.color-field .set-input {
+  letter-spacing: 0.04em;
+}
+.color-field small {
+  grid-column: 3 / -1;
+  margin-top: -6px;
+  font-size: var(--fs-12);
+  color: var(--sub);
+}
+.color-status {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: var(--r-card);
+  font-size: var(--fs-13);
+  line-height: 1.65;
+}
+.color-status p {
+  margin: 0;
+}
+.color-status p + p {
+  margin-top: 6px;
+}
+.color-status > svg {
+  flex: none;
+  margin-top: 2px;
+}
+.color-status.ok {
+  background: var(--tint);
+}
+.color-status.ok > svg {
+  color: var(--accent);
+}
+.color-status.bad {
+  border: 1px solid var(--line);
+}
+.color-status.bad > svg {
+  color: var(--danger);
+}
+.color-status .nm-link {
+  padding: 2px 0;
+}
+.color-details {
+  font-size: var(--fs-13);
+  color: var(--sub);
+}
+.color-details summary {
+  cursor: pointer;
+  min-height: 32px;
+  line-height: 32px;
+}
+.color-details[open] .color-field {
+  color: var(--ink);
+}
+.color-foot {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: auto;
+}
+.color-save {
+  height: 48px;
+  padding: 0 32px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-15);
+  font-weight: 700;
+}
+.color-delete {
+  margin-left: auto;
+}
+.color-mobile-body {
+  gap: 14px;
+}
+/* 見本: 中の色はすべてその場の変数（paletteStyle） */
+.color-sample {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 36px 44px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--bg);
+  color: var(--ink);
+  overflow: hidden;
+}
+.color-sample.mobile {
+  flex: none;
+  gap: 10px;
+  padding: 16px;
+  border-radius: var(--r-card-lg);
+}
+.color-sample-crumb {
+  font-size: var(--fs-12);
+  color: var(--sub);
+}
+.color-sample-title {
+  font-size: 24px;
+  font-weight: 700;
+}
+.color-sample-prose {
+  font-family: var(--font-prose);
+  font-size: var(--fs-16);
+  line-height: 2;
+}
+.color-sample.mobile .color-sample-prose {
+  font-size: var(--fs-15);
+  line-height: 1.85;
+}
+.color-sample-prose p {
+  margin: 0;
+}
+.color-sample-note {
+  padding-left: 10px;
+  border-left: 2px solid var(--line);
+  font-size: var(--fs-12);
+  color: var(--sub);
+}
+.color-sample-next {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card-lg);
+  background: var(--tint);
+}
+.color-sample.mobile .color-sample-next {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+.color-sample-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.color-sample-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 28px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: var(--fs-15);
+  font-weight: 700;
+}
+.color-sample.mobile .color-sample-btn {
+  height: 40px;
+  padding: 0 22px;
+  font-size: var(--fs-14);
+}
+.color-sample-link {
+  color: var(--accent);
+  font-size: var(--fs-13);
+}
+.color-sample-input {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  border: 1px solid var(--edge);
+  border-radius: var(--r-input);
+  background: var(--bg);
+  color: var(--sub);
+  font-size: var(--fs-13);
+}
+
+/* ---------- はじめての起動（1枚のページ。アプリの上に全面で重ねる） ---------- */
+.onb-page {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--ink);
+  overflow-y: auto;
+}
+.onb-head {
+  flex: none;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 0 28px;
+}
+.onb-page.mobile .onb-head {
+  padding: 0 18px;
+}
+.onb-brand {
+  font-size: var(--fs-15);
+  font-weight: 700;
+}
+.onb-count {
+  font-size: var(--fs-12);
+  color: var(--sub);
+}
+.onb-later {
+  margin-left: auto;
+}
+.onb-main {
+  flex: 1;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 40px var(--sp-5) 40px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.onb-page.mobile .onb-main {
+  padding: 8px 18px 0;
+  gap: 18px;
+}
+.onb-steps {
+  display: flex;
+  gap: 24px;
+}
+.onb-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-13);
+  color: var(--sub);
+}
+.onb-step b {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--edge);
+  display: grid;
+  place-items: center;
+  font-size: var(--fs-12);
+}
+.onb-step.on {
+  color: var(--ink);
+  font-weight: 700;
+}
+.onb-step.on b {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+.onb-title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.onb-page.mobile .onb-title {
+  font-size: 22px;
+}
+.onb-lead {
+  margin: 10px 0 0;
+  font-size: var(--fs-15);
+  line-height: 1.8;
+  color: var(--sub);
+}
+.onb-page.mobile .onb-lead {
+  margin-top: 8px;
+  font-size: var(--fs-14);
+}
+.onb-ways {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.onb-page.mobile .onb-ways {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+.onb-way {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card-lg);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: var(--fs-16);
+  font-weight: 700;
+  text-align: left;
+}
+.onb-page.mobile .onb-way {
+  padding: 14px 16px;
+  font-size: var(--fs-15);
+}
+.onb-way small {
+  font-size: var(--fs-13);
+  font-weight: 400;
+  color: var(--sub);
+  line-height: 1.6;
+}
+.onb-way.on {
+  border: 2px solid var(--accent);
+  padding: 17px 19px;
+  background: var(--tint);
+}
+.onb-page.mobile .onb-way.on {
+  padding: 13px 15px;
+}
+.onb-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.onb-key {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.onb-key .set-input,
+.onb-test {
+  height: 46px;
+}
+.onb-help {
+  align-self: flex-start;
+  padding: 4px 0;
+  font-size: var(--fs-13);
+  color: var(--accent);
+}
+.onb-foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.onb-primary {
+  height: 50px;
+  padding: 0 40px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-16);
+  font-weight: 700;
+}
+/* モバイルは主ボタンを下に固定する */
+.onb-page.mobile .onb-foot {
+  position: sticky;
+  bottom: 0;
+  margin: auto -18px 0;
+  padding: 12px 18px 22px;
+  background: var(--bg);
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+.onb-page.mobile .onb-primary {
+  width: 100%;
+  height: 54px;
+  font-size: var(--fs-17);
+}
+.onb-premise {
+  font-family: var(--font-prose);
+  font-size: var(--fs-16);
+}

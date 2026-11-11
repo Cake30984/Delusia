@@ -149,7 +149,7 @@ export function buildCommands(input: CommandInput): Command[] {
   list.push({ id: 'go:characters', label: 'キャラクター', group: '移動', icon: 'users', shortcut: 'Ctrl 2', run: goto('characters') })
   list.push({ id: 'go:worlds', label: '世界観', group: '移動', icon: 'globe', run: goto('worlds') })
   list.push({ id: 'go:cassettes', label: 'カセット', group: '移動', icon: 'library-big', run: goto('cassettes') })
-  list.push({ id: 'go:system', label: '設定', group: '移動', icon: 'settings', shortcut: 'Ctrl 3', run: goto('system') })
+  list.push({ id: 'go:system', label: '表示と設定', group: '移動', icon: 'settings', shortcut: 'Ctrl 3', run: goto('system') })
   if (input.imageJobCount > 0) {
     list.push({
       id: 'cmd:jobs',

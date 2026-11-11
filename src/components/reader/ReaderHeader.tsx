@@ -1,10 +1,9 @@
 import { useState } from 'react'
 import { storeActions, useStore } from '../../store'
 import { appConfirm } from '../../lib/dialogs'
-import { closeStoryPanel, openStoryPanel, useIsMobile, useOverlays } from '../../lib/nav'
+import { closeStoryPanel, openSettings, openStoryPanel, useIsMobile, useOverlays } from '../../lib/nav'
 import type { DockTab } from '../../types'
 import ActivityIndicator from '../ActivityIndicator'
-import ReaderSettings from '../ReaderSettings'
 import MenuPopover from '../MenuPopover'
 import { CommandButton } from '../PageHeader'
 import { Icon } from '../icons'
@@ -86,7 +85,10 @@ export default function ReaderHeader({ sessionId, title, mode, archived, ended, 
           <Icon name="panel-right" />
           {imageJobCount > 0 && <span className="icon-badge">{imageJobCount}</span>}
         </button>
-        <ReaderSettings />
+        {/* 文字の大きさ・行の間隔・色・書体は表示と設定の「表示」へ（P9 段8） */}
+        <button className="icon-btn" onClick={() => openSettings('display')} title="表示（文字の大きさ・色・書体）">
+          Aa
+        </button>
         <div className="menu-anchor">
           <button className="icon-btn" onClick={() => setShowMenu((v) => !v)} title="この物語の操作">
             <Icon name="more-horizontal" />

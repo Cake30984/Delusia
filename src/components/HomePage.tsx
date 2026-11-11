@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { storeActions, useStore } from '../store'
 import { isProviderUsable } from '../lib/providers'
 import { isMarkerContent } from '../lib/prompts'
-import { startKickoff, useIsMobile, useOverlays, type NewStoryWay } from '../lib/nav'
+import { startKickoff, useIsMobile, useOverlays, type NewStoryWay, openSettings } from '../lib/nav'
 import PageHeader from './PageHeader'
 import StoryList from './StoryList'
 import { Icon } from './icons'
@@ -81,7 +81,7 @@ export default function HomePage() {
           {!hasUsableProvider && (
             <div className="home-notice">
               <p>AI の接続先がまだありません。OpenRouter 等の API キーか、Ollama / LM Studio のようなローカルのサーバを登録してください。</p>
-              <button className="btn" onClick={() => setView('system')}>
+              <button className="btn" onClick={() => openSettings('writer')}>
                 <Icon name="settings" size={14} /> 接続先を設定する
               </button>
             </div>

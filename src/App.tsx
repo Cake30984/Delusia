@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { isLibraryView, storeActions, useStore } from './store'
 import ChatPanel from './components/ChatPanel'
-import { SettingsBody } from './components/SettingsModal'
+import SettingsPage from './components/settings/SettingsPage'
+import ColorEditor from './components/settings/ColorEditor'
 import HomePage from './components/HomePage'
 import NewStoryPage from './components/NewStoryPage'
 import LibraryPage from './components/LibraryPage'
-import PageHeader from './components/PageHeader'
 import ImageJobsDialog from './components/ImageJobsDialog'
 import { StoryPanelPage } from './components/reader/StoryPanel'
 import ReviewPage from './components/ReviewPage'
@@ -353,14 +353,9 @@ export default function App() {
       ) : isLibraryView(view) ? (
         <LibraryPage view={view} />
       ) : view === 'system' ? (
-        <div className="shell-page">
-          <PageHeader title="設定" />
-          <div className="shell-body">
-            <div className="page-narrow">
-              <SettingsBody />
-            </div>
-          </div>
-        </div>
+        <SettingsPage />
+      ) : view === 'color' ? (
+        <ColorEditor />
       ) : view === 'menu' && mobile ? (
         <MenuPage />
       ) : (

@@ -37,11 +37,11 @@ const KIND_LABELS: Record<ImageProvider['kind'], string> = {
 
 const inputStyle = {
   width: '100%',
-  background: 'var(--bg-elev2)',
-  border: '1px solid var(--border)',
-  borderRadius: 'var(--radius-sm)',
-  color: 'var(--text)',
-  padding: '9px 11px',
+  background: 'var(--bg)',
+  border: '1px solid var(--edge)',
+  borderRadius: 'var(--r-input)',
+  color: 'var(--ink)',
+  padding: '11px 12px',
   outline: 'none',
   fontSize: 14,
   marginBottom: 6,
@@ -273,7 +273,7 @@ function ComfyFields({ p, onChange }: { p: ImageProvider; onChange: (p: ImagePro
   )
 }
 
-/** SettingsBody（System ページ）内の「画像生成の接続先」管理セクション */
+/** 表示と設定の「挿絵の接続先」（`settings/SettingsPage`）の中身 */
 export default function ImageProviderSettings() {
   const imageProviders = useStore((st) => st.imageProviders)
   const providers = useStore((st) => st.providers)
@@ -457,7 +457,7 @@ export default function ImageProviderSettings() {
         </div>
       ))}
 
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {/* 3つとも横並びの同格。**特定の接続先を推奨しない**
             （事実だけを書き、用途の推奨・勧誘はしない＝下の注記と同じ方針） */}
         <button

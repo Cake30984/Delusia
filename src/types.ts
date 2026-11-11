@@ -824,7 +824,7 @@ export const DEFAULT_UI: UiPrefs = {
   proseFont: 'gothic',
 }
 
-/** リーダー設定の可変範囲（ReaderSettings のスライダー・数値入力と共有。F2） */
+/** 本文の表示の可変範囲（表示と設定の「表示」のスライダーと共有。F2） */
 export const UI_LIMITS = {
   fontSize: { min: 12, max: 22, step: 0.5 },
   lineHeight: { min: 1.4, max: 2.4, step: 0.05 },

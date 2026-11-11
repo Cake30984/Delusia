@@ -159,7 +159,19 @@ const LEGACY_DEFAULT_MODEL = 'openrouter/auto'
  * - `review` 章を閉じる（開いている物語の `reviewProgress`／`sceneReview` を出す。P9 段4）
  * - `panel` 状況・分岐・挿絵（モバイルの1枚のページ。PC は物語の画面の右に重ねるので行き先にしない。P9 段5）
  */
-export type View = 'home' | 'sessions' | 'new' | 'review' | 'panel' | 'characters' | 'worlds' | 'cassettes' | 'system' | 'menu'
+export type View =
+  | 'home'
+  | 'sessions'
+  | 'new'
+  | 'review'
+  | 'panel'
+  | 'characters'
+  | 'worlds'
+  | 'cassettes'
+  | 'system'
+  /** 色を作る（表示と設定から開く。P9 段8） */
+  | 'color'
+  | 'menu'
 
 /** 素材（キャラクター・世界観・カセット）の画面か */
 export function isLibraryView(view: View): view is 'characters' | 'worlds' | 'cassettes' {

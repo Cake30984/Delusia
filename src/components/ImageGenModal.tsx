@@ -16,6 +16,7 @@ import { dismissImageSetup } from '../lib/imageSetup'
 import { costLineOf } from '../lib/cost'
 import type { ArtStyle, ImageQuality } from '../types'
 import { Icon } from './icons'
+import { openSettings } from '../lib/nav'
 
 /** API の値をそのまま3択で見せる（docs/設計_画像生成の簡易化.md §6.3） */
 const QUALITY_LABELS: { value: ImageQuality; label: string }[] = [
@@ -99,7 +100,6 @@ export default function ImageGenModal({
     cancelImageJob,
     dismissImageJob,
     applyImageJobResult,
-    setView,
     recordUsage,
     upsertImageProvider,
   } = storeActions()
@@ -318,7 +318,7 @@ export default function ImageGenModal({
                       className="btn primary"
                       onClick={() => {
                         onClose()
-                        setView('system')
+                        openSettings('image')
                       }}
                     >
                       <Icon name="settings" size={14} /> 設定を開く
