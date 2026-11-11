@@ -128,6 +128,12 @@
   height: 40px;
   flex: none;
   border-radius: 50%;
+  /* 絵が無いときはイニシャル（EntityAvatar が div で描く） */
+  display: grid;
+  place-items: center;
+  font-size: var(--fs-16);
+  font-weight: 700;
+  overflow: hidden;
 }
 .lib-row-avatar.icon {
   display: grid;

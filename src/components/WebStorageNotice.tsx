@@ -32,7 +32,7 @@ export default function WebStorageNotice({ onClose }: { onClose: () => void }) {
       </p>
       <p className="desc">
         Cookie とサイトデータを削除するなどの操作によって失われます。時々書き出して手元に置いてください
-        （設定 &gt; データ入出力 &gt;「全データをエクスポート」）。
+        （表示と設定 &gt; データの書き出しと読み込み &gt;「書き出す」）。
       </p>
       <HelpDetails summary="消える条件・引き継げない条件">
         <ul>
