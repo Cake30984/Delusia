@@ -807,10 +807,9 @@ export interface CustomPalette {
 }
 
 export const DEFAULT_UI: UiPrefs = {
-  // 初期値は「状態」タブを開いた状態（CG3）。目標＝エンディング・実績・残り日数はここにしか
-  // 出ておらず、既定が null だと**初めて遊ぶ人はパネルの存在にすら気付けない**。
-  // 既に設定を持っている人は `normalizeUiPrefs` が保存値を通すので影響を受けない
-  dockTab: 'status',
+  // 初期値は閉じた状態（P9 段10）。パネルは本文の右に重なるので、既定で開くと本文と「次の一手」の右端が隠れる。
+  // 状況・分岐・挿絵は「状況」ボタンか「何をしますか」から開ける。既に設定を持っている人は `normalizeUiPrefs` が保存値を通すので影響を受けない
+  dockTab: null,
   dockWidth: 360,
   fontSize: 15.5,
   lineHeight: 1.9,
