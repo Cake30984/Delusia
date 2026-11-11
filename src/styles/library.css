@@ -1,0 +1,297 @@
+/* ---------- キャラクターと世界観（P9 段7。PC は 一覧＋その場で直す編集 の2列、モバイルは一覧と1枚の編集） ---------- */
+.lib-page {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--bg);
+}
+.lib-tabs-row {
+  flex: none;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--sp-6);
+  box-sizing: border-box;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+}
+.lib-create {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  margin-bottom: 6px;
+  padding: 0 16px;
+  border: 1px solid var(--ink);
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink);
+  font-size: var(--fs-13);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.lib-create:hover {
+  background: var(--tint);
+}
+.lib-create.mobile {
+  width: 100%;
+  height: 50px;
+  margin: 0;
+  font-size: var(--fs-15);
+}
+.lib-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.lib-layout {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 18px var(--sp-6) 0;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  column-gap: 40px;
+}
+.lib-page.mobile .lib-layout {
+  grid-template-columns: minmax(0, 1fr);
+  padding: 14px 18px 0;
+}
+.lib-list {
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: var(--sp-6);
+}
+.lib-list.drag-over {
+  outline: 2px dashed var(--accent);
+  outline-offset: -4px;
+  border-radius: var(--r-card);
+}
+.lib-search {
+  flex: none;
+  height: 40px;
+  margin-bottom: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--edge);
+  border-radius: var(--r-input);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: var(--fs-14);
+}
+.lib-page.mobile .lib-search {
+  height: 46px;
+  font-size: var(--fs-16);
+}
+.lib-row {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 0 12px;
+  border: none;
+  border-radius: var(--r-input);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  font-size: var(--fs-15);
+}
+.lib-page.mobile .lib-row {
+  min-height: 64px;
+  padding: 0;
+  border-radius: 0;
+  border-bottom: 1px solid var(--line);
+}
+.lib-row:hover {
+  background: var(--tint);
+}
+.lib-row.on {
+  background: var(--tint);
+  box-shadow: inset 2px 0 0 0 var(--accent);
+}
+.lib-row.selected {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.lib-row-avatar {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 50%;
+}
+.lib-row-avatar.icon {
+  display: grid;
+  place-items: center;
+  background: var(--tint);
+  border: 1px solid var(--line);
+  color: var(--sub);
+}
+.lib-row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.lib-row-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lib-row-text small {
+  font-size: var(--fs-12);
+  color: var(--sub);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lib-empty,
+.lib-hint {
+  font-size: var(--fs-13);
+  color: var(--sub);
+  line-height: 1.7;
+}
+.lib-hint {
+  margin-top: var(--sp-3);
+  font-size: var(--fs-12);
+}
+.lib-editor-empty {
+  color: var(--sub);
+  font-size: var(--fs-14);
+  padding-top: var(--sp-6);
+}
+
+/* 右の列の編集（キャラクター・世界観） */
+.lib-editor {
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: var(--sp-6);
+}
+.lib-editor-head,
+.lib-editor.world-page .page-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 4px 0 var(--sp-2);
+  margin-bottom: 0;
+  background: var(--bg);
+}
+.lib-editor-title,
+.lib-editor.world-page .page-head h2 {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--fs-20);
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lib-editor-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-shrink: 0;
+}
+.lib-editor-notice {
+  margin: 0 0 var(--sp-4);
+  font-size: var(--fs-12);
+  color: var(--sub);
+}
+.lib-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 24px;
+  align-content: start;
+}
+.lib-editor-grid .lib-wide {
+  grid-column: 1 / -1;
+}
+.lib-page.mobile .lib-editor-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+/* 世界観の編集は項目の一覧（左）と中身。右の列では幅が足りないので項目を上に並べる */
+.lib-editor.world-page .page-body {
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.lib-editor.world-page .section-nav {
+  position: static;
+  width: auto;
+}
+.lib-editor.world-page .section-nav.nav-vertical {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  padding: 0;
+}
+.lib-editor.world-page .nav-group {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.lib-editor.world-page .nav-group + .nav-group {
+  margin-top: 0;
+}
+.lib-editor.world-page .section-content {
+  max-width: none;
+  width: 100%;
+}
+.lib-page.mobile .lib-editor.world-page .page-head .btn {
+  padding: 6px 10px;
+}
+
+/* モバイルで1つを開いているとき（見る・少し直す） */
+.lib-single {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 18px;
+}
+.lib-single > .lib-editor {
+  flex: 1;
+}
+.lib-page.mobile:has(.lib-single) .panel-seg,
+.lib-page.mobile:has(.lib-single) .review-bottom {
+  display: none;
+}
+.lib-page.mobile .lib-editor-actions .btn {
+  padding: 6px 10px;
+}
+.lib-page.mobile .lib-editor-actions .btn.danger,
+.lib-page.mobile .lib-editor-actions .btn:not(.primary):not(.danger) {
+  display: none;
+}
+
+/* カセットの棚（今のカードの一覧のまま） */
+.lib-cassettes {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 18px var(--sp-6) var(--sp-6);
+}
+.lib-page.mobile .lib-cassettes {
+  padding: 14px 18px var(--sp-6);
+}
+.lib-page.mobile .panel-seg {
+  margin-top: var(--sp-1);
+}
+/* 1つを開いている間はページの上端を隠す（編集の上端の「一覧へ」で戻る。戻るが2つ並ばないように） */
+.lib-page.mobile:has(.lib-single) > .reader-head {
+  display: none;
+}

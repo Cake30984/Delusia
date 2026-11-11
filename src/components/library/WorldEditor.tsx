@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { newLoreEntry, newRelationAspect, storeActions } from '../../store'
 import type {
   LoreEntry,
@@ -38,10 +38,19 @@ const SECTION_GROUPS: { heading: string; items: { id: Section; label: string }[]
 
 interface Props {
   world: World
+  /** 閉じる（削除したとき・その場で開いていないときの保存のあと） */
   onClose: () => void
+  /**
+   * その場で開く（P9 段7。キャラクターと世界観のページの右の列・モバイルの1枚の編集）。
+   * 保存しても閉じない。`onBack` があれば上に「一覧へ」を出す
+   */
+  inline?: boolean
+  onBack?: () => void
+  /** 未保存の変更があるか（一覧で別のものを選ぶ前に確かめるため） */
+  onDirty?: (dirty: boolean) => void
 }
 
-export default function WorldEditor({ world, onClose }: Props) {
+export default function WorldEditor({ world, onClose, inline, onBack, onDirty }: Props) {
   const { upsertWorld, deleteWorld } = storeActions()
   const [d, setD] = useState<World>(world)
   const [exporting, setExporting] = useState(false)
@@ -52,9 +61,15 @@ export default function WorldEditor({ world, onClose }: Props) {
     setDirty(true)
   }
 
+  useEffect(() => {
+    onDirty?.(dirty)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dirty])
+
   const back = async () => {
     if (dirty && !(await appConfirm({ message: '編集内容を破棄しますか？', okLabel: '破棄', danger: true }))) return
-    onClose()
+    if (onBack) onBack()
+    else onClose()
   }
 
   const exportCard = async () => {
@@ -88,15 +103,18 @@ export default function WorldEditor({ world, onClose }: Props) {
   const save = () => {
     // order を現在の並びで振り直して保存
     upsertWorld({ ...d, entries: d.entries.map((e, i) => ({ ...e, order: i })) })
-    onClose()
+    if (inline) setDirty(false)
+    else onClose()
   }
 
   return (
-    <div className="library world-page">
+    <div className={inline ? 'lib-editor world-page' : 'library world-page'}>
       <div className="page-head">
-        <button className="btn" onClick={back}>
-          ← 戻る
-        </button>
+        {(!inline || onBack) && (
+          <button className="icon-btn" onClick={back} title="一覧へ" aria-label="一覧へ">
+            <Icon name="chevron-left" size={20} />
+          </button>
+        )}
         <h2>{d.name || '無名の世界'}</h2>
         <button
           className="btn danger"
@@ -118,12 +136,12 @@ export default function WorldEditor({ world, onClose }: Props) {
             </>
           )}
         </button>
-        <button className="btn primary" onClick={save}>
-          保存
+        <button className="btn primary" onClick={save} disabled={inline && !dirty}>
+          {inline && !dirty ? '保存済み' : '保存'}
         </button>
       </div>
-      <p style={{ fontSize: 12, color: 'var(--text-faint)', marginTop: 0, marginBottom: 16 }}>
-        素材の編集・保存はすべてのセッション・すべての分岐に共有されます（分岐を戻しても巻き戻りません）。
+      <p className="lib-editor-notice">
+        直した内容はすべての物語・すべての分岐で共有されます（分岐を戻しても巻き戻りません）。
       </p>
 
       <div className="page-body">

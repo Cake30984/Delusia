@@ -1,7 +1,7 @@
 import { currentScene, useStore, type View } from '../store'
 import type { DockTab, Session } from '../types'
 import type { IconName } from '../components/icons'
-import { openStoryPanel, useOverlays, viewBeneathMenu, type ReaderModal } from './nav'
+import { openInLibrary, openStoryPanel, useOverlays, viewBeneathMenu, type ReaderModal } from './nav'
 import { appConfirm } from './dialogs'
 
 /**
@@ -37,6 +37,9 @@ export interface CommandInput {
     /** 完結済み（続ける・終わり方を出さない） */
     ended: boolean
     archived: boolean
+    /** 登場キャラクター（「この物語」から直接開くため） */
+    castIds: string[]
+    worldId: string | null
   } | null
   isStreaming: boolean
   isReviewing: boolean
@@ -113,6 +116,28 @@ export function buildCommands(input: CommandInput): Command[] {
         if (await appConfirm({ message: 'この物語を削除しますか？', danger: true })) st().deleteSession(active.id)
       },
     })
+    // 登場人物と世界観を直接開く（P9 段7・統合案6。素材は第一階層から下げ、物語から開く）
+    for (const id of active.castIds) {
+      const c = input.characters.find((x) => x.id === id)
+      if (!c?.name) continue
+      list.push({
+        id: `cast:${id}`,
+        label: `登場人物「${c.name}」を開く`,
+        group: 'この物語',
+        icon: 'users',
+        run: () => openInLibrary('characters', id),
+      })
+    }
+    const world = active.worldId ? input.worlds.find((w) => w.id === active.worldId) : undefined
+    if (world?.name) {
+      list.push({
+        id: `cast-world:${world.id}`,
+        label: `世界観「${world.name}」を開く`,
+        group: 'この物語',
+        icon: 'globe',
+        run: () => openInLibrary('worlds', world.id),
+      })
+    }
   }
 
   // 移動（行き先）
@@ -149,11 +174,11 @@ export function buildCommands(input: CommandInput): Command[] {
   }
   for (const c of input.characters) {
     if (!c.name) continue
-    list.push({ id: `char:${c.id}`, label: c.name, group: 'キャラクター', icon: 'users', run: goto('characters') })
+    list.push({ id: `char:${c.id}`, label: c.name, group: 'キャラクター', icon: 'users', run: () => openInLibrary('characters', c.id) })
   }
   for (const w of input.worlds) {
     if (!w.name) continue
-    list.push({ id: `world:${w.id}`, label: w.name, group: '世界観', icon: 'globe', run: goto('worlds') })
+    list.push({ id: `world:${w.id}`, label: w.name, group: '世界観', icon: 'globe', run: () => openInLibrary('worlds', w.id) })
   }
 
   if (reading) {
@@ -197,6 +222,8 @@ export function commandInputFromStore(): CommandInput {
           hasScene: !!scene,
           ended: !!session.ending,
           archived: !!session.archived,
+          castIds: session.characterIds,
+          worldId: session.worldId,
         }
       : null,
     isStreaming: s.isStreaming,

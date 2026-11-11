@@ -205,12 +205,15 @@ export const useOverlays = create<{
    * 挿絵の画面は本文の文脈を組み立てる物語の画面にあるので、ほかの画面からはこれを置いて物語の画面に開かせる
    */
   illustrateRequest: IllustrateRequest | null
+  /** キャラクターと世界観のページで開くもの（物語の画面から登場人物を直接開く。P9 段7） */
+  libraryFocusId: string | null
   setPaletteOpen: (open: boolean) => void
   setJobsOpen: (open: boolean) => void
   setNewStoryWay: (way: NewStoryWay) => void
   setNewEditorId: (id: string | null, notice?: string) => void
   setReaderModal: (m: ReaderModal | null) => void
   setIllustrateRequest: (r: IllustrateRequest | null) => void
+  setLibraryFocusId: (id: string | null) => void
 }>((set) => ({
   paletteOpen: false,
   jobsOpen: false,
@@ -221,6 +224,8 @@ export const useOverlays = create<{
   readerModal: null,
   readerModalFor: null,
   illustrateRequest: null,
+  libraryFocusId: null,
+  setLibraryFocusId: (libraryFocusId) => set({ libraryFocusId }),
   setIllustrateRequest: (illustrateRequest) => set({ illustrateRequest }),
   setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
   setJobsOpen: (jobsOpen) => set({ jobsOpen }),
@@ -267,6 +272,12 @@ export function openStoryPanel(tab: DockTab) {
   } else if (st.view !== 'sessions') {
     st.setView('sessions')
   }
+}
+
+/** キャラクターまたは世界観をキャラクターと世界観のページで開く（物語の画面から登場人物を開く等） */
+export function openInLibrary(kind: 'characters' | 'worlds', id: string) {
+  useOverlays.getState().setLibraryFocusId(id)
+  useStore.getState().setView(kind)
 }
 
 /** パネルを閉じる。モバイルのページなら戻る */

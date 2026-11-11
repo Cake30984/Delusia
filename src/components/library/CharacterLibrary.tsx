@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { newCharacter, storeActions, useStore } from '../../store'
-import type { Character } from '../../types'
+import { newCharacter, storeActions, useListStore, useStore } from '../../store'
 import CharacterEditor from './CharacterEditor'
 import EntityAvatar from '../EntityAvatar'
 import { parseCardPng, attachCardImage } from '../../lib/cards'
@@ -8,12 +7,18 @@ import { useCardDrop } from '../../lib/useCardDrop'
 import { useMultiSelect } from '../../lib/useMultiSelect'
 import { appConfirm } from '../../lib/dialogs'
 import { SelectionBar, CardContextMenu } from './LibraryMultiSelect'
-import { Icon } from '../icons'
+import { useLibraryEditing } from './useLibraryEditing'
 
-export default function CharacterLibrary() {
+/**
+ * キャラクター（P9 段7）。PC は左に一覧・右にその場で直す編集、モバイルは一覧と1枚の編集。
+ * 一覧は 名前で探す・カード（PNG）の取り込み（ドラッグ＆ドロップ）・右クリックの複製と削除・複数選択
+ */
+export default function CharacterLibrary({ createSeq }: { createSeq: number }) {
   const characters = useStore((st) => st.characters)
+  // どの物語に出ているか（件数だけ）。本文は読まない
+  const casts = useListStore((st) => st.sessions.map((s) => ({ ids: s.characterIds.join('\u0000') })))
   const { importCharacterCard, deleteCharacter, duplicateCharacter } = storeActions()
-  const [editing, setEditing] = useState<Character | null>(null)
+  const { mobile, editing, select, onDirty, close } = useLibraryEditing(characters, newCharacter, createSeq)
   const [notice, setNotice] = useState('')
   const [query, setQuery] = useState('')
   const [ctxMenu, setCtxMenu] = useState<{ id: string; x: number; y: number } | null>(null)
@@ -24,16 +29,15 @@ export default function CharacterLibrary() {
       try {
         const bytes = new Uint8Array(await file.arrayBuffer())
         const parsed = parseCardPng(bytes)
-        if (!parsed || parsed.kind !== 'character') throw new Error('キャラカードが見つかりません。')
+        if (!parsed || parsed.kind !== 'character') throw new Error('キャラクターのカードが見つかりません。')
         const withImage = await attachCardImage(parsed.character, bytes)
         importCharacterCard(withImage)
         setNotice(`カードから「${withImage.name || '無名'}」を追加しました。`)
       } catch (e) {
-        setNotice(`インポート失敗：${(e as Error).message}`)
+        setNotice(`読み込めませんでした：${(e as Error).message}`)
       }
     }
   }
-
   const { dragOver, dropProps } = useCardDrop(handleFiles)
 
   const q = query.trim().toLowerCase()
@@ -42,8 +46,8 @@ export default function CharacterLibrary() {
     if ((c.name || '').toLowerCase().includes(q)) return true
     return c.tags.some((t) => t.toLowerCase().includes(q))
   })
-
   const { selected, clear, handleClick, selectForContext } = useMultiSelect(visible.map((c) => c.id))
+  const storyCount = (id: string) => casts.filter((s) => s.ids.split('\u0000').includes(id)).length
 
   const doDelete = async (ids: string[]) => {
     const names = ids
@@ -59,112 +63,106 @@ export default function CharacterLibrary() {
     )
       return
     ids.forEach((id) => deleteCharacter(id))
+    if (editing && ids.includes(editing.id)) close()
     clear()
   }
 
-  // 複製（G4-a）。エディタは開かず一覧に増やすだけ＝一括複製と挙動を揃える
+  // 複製（G4-a）。編集は開かず一覧に増やすだけ＝一括複製と挙動を揃える
   const doDuplicate = (ids: string[]) => {
     ids.forEach((id) => duplicateCharacter(id))
-    setNotice(ids.length > 1 ? `キャラ ${ids.length} 件を複製しました。` : 'キャラを複製しました。')
+    setNotice(ids.length > 1 ? `キャラクター ${ids.length} 件を複製しました。` : 'キャラクターを複製しました。')
     clear()
   }
 
+  const editor = editing && (
+    <CharacterEditor
+      key={editing.id}
+      character={editing}
+      inline
+      onBack={mobile ? () => void select(null) : undefined}
+      onClose={close}
+      onDirty={onDirty}
+    />
+  )
+
+  // モバイルは選んだら1枚の編集
+  if (mobile && editing) return <div className="lib-single">{editor}</div>
+
   return (
-    <div className={'library' + (dragOver ? ' drag-over' : '')} {...dropProps}>
-      <div className="library-head">
-        <h2>
-          <Icon name="users" size={18} className="head-icon" />
-          キャラクター
-        </h2>
-        <button className="btn primary" onClick={() => setEditing(newCharacter())}>
-          <Icon name="plus" size={14} /> キャラクターを作る
-        </button>
+    <div className="lib-layout">
+      <div className={'lib-list' + (dragOver ? ' drag-over' : '')} {...dropProps}>
+        {characters.length > 0 && (
+          <input
+            type="search"
+            className="lib-search"
+            aria-label="キャラクターを探す"
+            placeholder="名前やタグで探す"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        )}
+        {notice && <p className="notice">{notice}</p>}
+        <SelectionBar count={selected.size} noun="キャラクター" onDelete={() => doDelete([...selected])} onClear={clear} />
+        {characters.length === 0 ? (
+          <p className="lib-empty">
+            まだキャラクターがいません。「キャラクターを作る」から作るか、キャラクターのカード（PNG）をここへドラッグしてください。
+          </p>
+        ) : visible.length === 0 ? (
+          <p className="lib-empty">見つかりません。</p>
+        ) : (
+          visible.map((c) => {
+            const n = storyCount(c.id)
+            return (
+              <button
+                key={c.id}
+                className={
+                  'lib-row' + (editing?.id === c.id ? ' on' : '') + (selected.has(c.id) ? ' selected' : '')
+                }
+                aria-current={editing?.id === c.id ? 'true' : undefined}
+                onClick={(e) => {
+                  if (handleClick(e, c.id)) return
+                  void select(c)
+                }}
+                onContextMenu={(e) => {
+                  e.preventDefault()
+                  selectForContext(c.id)
+                  setCtxMenu({ id: c.id, x: e.clientX, y: e.clientY })
+                }}
+              >
+                <EntityAvatar className="lib-row-avatar" avatar={c.avatar} name={c.name || '無'} />
+                <span className="lib-row-text">
+                  <span className="lib-row-name">{c.name || '無名'}</span>
+                  <small>
+                    {[c.persona.split('\n')[0].slice(0, 28), n > 0 ? `${n}つの物語に登場` : ''].filter(Boolean).join('　')}
+                  </small>
+                </span>
+              </button>
+            )
+          })
+        )}
+        {characters.length > 0 && !mobile && (
+          <p className="lib-hint">キャラクターのカード（PNG）を一覧へドラッグすると読み込めます。</p>
+        )}
+        {mobile && <p className="lib-hint">スマートフォンでは見る・少し直すまで。新しく作り込むときはパソコンが向いています。</p>}
       </div>
 
-      {/* D&D の案内は空の時だけ（普段は場所を取らない。FB8-E4） */}
-      {characters.length === 0 && (
-        <div className="desc">キャラカード（PNG）をここにドラッグ＆ドロップするとインポートできます。</div>
-      )}
-      {characters.length > 0 && (
-        <input
-          className="model-search"
-          placeholder="名前・タグで検索"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-      )}
-      {notice && <p className="notice">{notice}</p>}
-
-      <SelectionBar
-        count={selected.size}
-        noun="キャラ"
-        onDelete={() => doDelete([...selected])}
-        onClear={clear}
-      />
-
-      {characters.length === 0 ? (
-        <div className="library-empty">
-          <p>まだキャラクターがいません。「キャラクターを作る」から作成、またはカード画像をドロップしましょう。</p>
-        </div>
-      ) : visible.length === 0 ? (
-        <div className="library-empty">
-          <p>見つかりません。</p>
-        </div>
-      ) : (
-        <div className="card-grid">
-          {visible.map((c) => (
-            <div
-              key={c.id}
-              className={'entity-card' + (selected.has(c.id) ? ' selected' : '')}
-              onClick={(e) => {
-                if (handleClick(e, c.id)) return
-                setEditing(c)
-              }}
-              onContextMenu={(e) => {
-                e.preventDefault()
-                selectForContext(c.id)
-                setCtxMenu({ id: c.id, x: e.clientX, y: e.clientY })
-              }}
-            >
-              <EntityAvatar className="entity-avatar" avatar={c.avatar} name={c.name || '✦'} />
-              <div className="entity-body">
-                <div className="entity-name">{c.name || '無名'}</div>
-                <div className="entity-desc">{c.persona || '設定なし'}</div>
-                {c.tags.length > 0 && (
-                  <div className="tag-row">
-                    {c.tags.map((t) => (
-                      <span key={t} className="tag">
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      {!mobile &&
+        (editor || <div className="lib-editor-empty">一覧から選ぶと、ここで直せます。</div>)}
 
       {ctxMenu && (
         <CardContextMenu
           pos={{ x: ctxMenu.x, y: ctxMenu.y }}
           count={selected.has(ctxMenu.id) ? selected.size : 1}
-          noun="キャラ"
+          noun="キャラクター"
           onEdit={() => {
             const c = characters.find((x) => x.id === ctxMenu.id)
-            if (c) setEditing(c)
+            if (c) void select(c)
           }}
-          onDuplicate={() =>
-            doDuplicate(selected.has(ctxMenu.id) && selected.size > 0 ? [...selected] : [ctxMenu.id])
-          }
-          onDelete={() =>
-            doDelete(selected.has(ctxMenu.id) && selected.size > 0 ? [...selected] : [ctxMenu.id])
-          }
+          onDuplicate={() => doDuplicate(selected.has(ctxMenu.id) && selected.size > 0 ? [...selected] : [ctxMenu.id])}
+          onDelete={() => doDelete(selected.has(ctxMenu.id) && selected.size > 0 ? [...selected] : [ctxMenu.id])}
           onClose={() => setCtxMenu(null)}
         />
       )}
-
-      {editing && <CharacterEditor character={editing} onClose={() => setEditing(null)} />}
     </div>
   )
 }

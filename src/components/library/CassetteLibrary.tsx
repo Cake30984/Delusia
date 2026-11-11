@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { storeActions, useStore } from '../../store'
 import type { Cassette } from '../../types'
 import { parseCardPng, exportCassetteCard } from '../../lib/cards'
@@ -45,7 +45,7 @@ function CassetteCard({
         <div className="entity-desc">{cas.description || '紹介文なし'}</div>
         <div className="cassette-actions">
           <button className="btn primary" onClick={onPlay}>
-            <Icon name="play" size={13} /> 遊ぶ
+            <Icon name="play" size={13} /> 始める
           </button>
           <button className="btn" onClick={onEdit} title="カセットを編集">
             <Icon name="pencil" size={13} />
@@ -62,7 +62,11 @@ function CassetteCard({
   )
 }
 
-export default function CassetteLibrary() {
+/**
+ * カセットの棚（P9 段7 で「キャラクターと世界観」のページの3つめのタブに）。カードの一覧と、作る・直すはモーダルのまま。
+ * 「＋カセットを作る」はページの上端（`createSeq` が増える）
+ */
+export default function CassetteLibrary({ createSeq }: { createSeq: number }) {
   const cassettes = useStore((st) => st.cassettes)
   const characters = useStore((st) => st.characters)
   const worlds = useStore((st) => st.worlds)
@@ -70,6 +74,11 @@ export default function CassetteLibrary() {
   const [notice, setNotice] = useState('')
   // null=閉じている / {}=新規 / {cassette}=編集
   const [editing, setEditing] = useState<{ cassette?: Cassette } | null>(null)
+  // 開いたあとに押されたときだけ（ほかのタブで押した回数を持ち込まない）
+  const [seqAtMount] = useState(createSeq)
+  useEffect(() => {
+    if (createSeq !== seqAtMount) setEditing({})
+  }, [createSeq, seqAtMount])
 
   const handleFiles = async (files: FileList) => {
     for (const file of Array.from(files)) {
@@ -108,7 +117,7 @@ export default function CassetteLibrary() {
   const doDelete = async (cas: Cassette) => {
     if (
       !(await appConfirm({
-        message: `カセット「${cas.title || '無題'}」を棚から削除しますか？\n（すでに始めたセッションは残ります）`,
+        message: `カセット「${cas.title || '無題'}」を棚から削除しますか？\n（すでに始めた物語は残ります）`,
         danger: true,
       }))
     )
@@ -117,33 +126,23 @@ export default function CassetteLibrary() {
   }
 
   return (
-    <div className={'library' + (dragOver ? ' drag-over' : '')} {...dropProps}>
-      <div className="library-head">
-        <h2>
-          <Icon name="gamepad" size={18} className="head-icon" />
-          ゲームカセット
-        </h2>
-        <button className="btn primary" onClick={() => setEditing({})}>
-          <Icon name="plus" size={14} /> カセットを作る
-        </button>
-      </div>
-
-      <div className="desc">1枚で最初から遊べる配布カード（PNG）の棚です。</div>
+    <div className={'library lib-cassettes' + (dragOver ? ' drag-over' : '')} {...dropProps}>
+      <div className="desc">世界観・登場人物・書き出しをひとまとめにした、物語の始まりのカード（PNG）の棚です。</div>
       <HelpDetails>
         <p>
-          「カセットを作る」で世界観・キャラクター・中心人物・開始設定を1つにまとめて作れます。PNG
-          をここへドラッグ＆ドロップして取り込むこともできます。
+          「カセットを作る」で世界観・キャラクター・中心人物・始め方を1つにまとめて作れます。読んでいる物語の
+          「カセットにする」からも作れます。PNG をここへドラッグ＆ドロップして取り込むこともできます。
         </p>
         <p>
-          「遊ぶ」でいつでも新しいセッションを始められます（何度でも最初から）。世界観・キャラクターは
-          自動でライブラリにも登録されます。
+          「始める」でいつでも新しい物語を始められます（何度でも最初から）。世界観・キャラクターは
+          キャラクターと世界観にも自動で加わります。
         </p>
       </HelpDetails>
       {notice && <p className="notice">{notice}</p>}
 
       {cassettes.length === 0 ? (
         <div className="library-empty">
-          <p>まだカセットがありません。「カセットを作る」か、ゲームカセットの PNG をここにドロップして登録しましょう。</p>
+          <p>まだカセットがありません。「カセットを作る」か、カセットの PNG をここへドラッグしてください。</p>
         </div>
       ) : (
         <div className="cassette-grid">

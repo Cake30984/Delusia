@@ -23,7 +23,16 @@ const base: CommandInput = {
 const reading: CommandInput = {
   ...base,
   view: 'sessions',
-  active: { id: 's1', mode: 'story', storyStarted: true, hasScene: true, ended: false, archived: false },
+  active: {
+    id: 's1',
+    mode: 'story',
+    storyStarted: true,
+    hasScene: true,
+    ended: false,
+    archived: false,
+    castIds: ['c1', 'c2'],
+    worldId: 'w1',
+  },
 }
 
 const ids = (input: CommandInput) => buildCommands(input).map((c) => c.id)
@@ -82,6 +91,14 @@ describe('buildCommands', () => {
     expect(ended).not.toContain('cmd:end-scene')
     expect(ended).not.toContain('cmd:ending')
     expect(ended).toContain('cmd:export')
+  })
+
+  it('読んでいる物語の登場人物と世界観を「この物語」から直接開ける（名前の無い人は出さない）', () => {
+    const list = buildCommands(reading)
+    expect(list.find((c) => c.id === 'cast:c1')?.label).toBe('登場人物「ミナ」を開く')
+    expect(list.map((c) => c.id)).not.toContain('cast:c2')
+    expect(list.find((c) => c.id === 'cast-world:w1')?.group).toBe('この物語')
+    expect(ids({ ...reading, view: 'home' })).not.toContain('cast:c1')
   })
 
   it('グループの順に並ぶ', () => {
