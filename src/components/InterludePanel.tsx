@@ -84,7 +84,7 @@ function InterludePanel({
               <button
                 onClick={() => generateInterlude(scene.id, it.characterId)}
                 disabled={busy || isStreaming}
-                title="このシーンを同じ視点で書き直す（元の幕間は残ります）"
+                title="この章を同じ視点で書き直す（元の幕間は残ります）"
               >
                 <Icon name="rotate-ccw" size={12} /> 引き直す
               </button>
@@ -140,7 +140,7 @@ function InterludePanel({
           {!closed ? (
             // 進行中のシーンでは作れない。隠さずに理由を出す（§2.9・1シーン＝1話）
             <span className="desc">
-              <Icon name="users" size={13} /> 別の視点で読む（このシーンを終えると使えます）
+              <Icon name="users" size={13} /> 別の視点で読む（この章を閉じると使えます）
             </span>
           ) : busy ? (
             <span className="desc">
@@ -172,7 +172,7 @@ function InterludePanel({
               className="link"
               onClick={() => setPickerOpen(true)}
               disabled={isStreaming}
-              title="このシーンを丸ごと、中心人物以外の視点で描き直します（読み物・本編には影響しません）"
+              title="この章を丸ごと、中心人物以外の視点で描き直します（読み物・本編には影響しません）"
             >
               <Icon name="users" size={13} /> 別の視点で読む
             </button>

@@ -246,7 +246,7 @@ export function GalleryBody({
   const records = sessionImageLogs[session.id] ?? []
   const scenesWithImages = session.scenes.filter((sc) => (sc.illustrations ?? []).length > 0)
 
-  const sceneHeading = (sc: Scene) => [sc.timeLabel, sc.title].filter(Boolean).join('｜') || 'シーン'
+  const sceneHeading = (sc: Scene) => [sc.timeLabel, sc.title].filter(Boolean).join('｜') || '章'
 
   const msgIds = new Set(session.messages.map((m) => m.id))
   /**
@@ -297,7 +297,7 @@ export function GalleryBody({
     if (records.length === 0) {
       return (
         <p className="desc">
-          まだ記録がありません。挿絵を採用すると、分岐やシーンが消えてもここに残ります。
+          まだ記録がありません。挿絵を採用すると、分岐や章が消えてもここに残ります。
         </p>
       )
     }

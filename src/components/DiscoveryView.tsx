@@ -36,7 +36,7 @@ export default function DiscoveryView({ session, onEdit }: Props) {
   if (isEmpty) {
     return (
       <p className="inline-empty">
-        まだ発見された設定はありません。シーンを終えるとレビューでここに追記されます。
+        まだ発見された設定はありません。章を閉じると、ここに書き足されます。
       </p>
     )
   }

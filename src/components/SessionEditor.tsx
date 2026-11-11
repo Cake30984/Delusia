@@ -90,7 +90,7 @@ export default function SessionEditor({ session, notice, onClose }: Props) {
   return (
     <>
     <ModalShell
-      title="セッション設定"
+      title="物語の設定"
       onClose={onClose}
       dirty={dirty}
       wide
@@ -138,7 +138,7 @@ export default function SessionEditor({ session, notice, onClose }: Props) {
               **`modal-body` は flex 行なので、ここ（右パネルの中）へ置く**——
               `se-navlayout` の手前に出すと横並びの1項目になって設定欄が押し出される */}
           {notice && (
-            <p style={{ fontSize: 12, color: 'var(--text-faint)', marginTop: 0, marginBottom: 12 }}>
+            <p style={{ fontSize: 12, color: 'var(--sub)', marginTop: 0, marginBottom: 12 }}>
               {notice}
             </p>
           )}
@@ -159,7 +159,7 @@ export default function SessionEditor({ session, notice, onClose }: Props) {
                   <p className="inline-empty">
                     キャラクターがありません。
                     <button className="link" onClick={() => { onClose(); setView('characters') }}>
-                      キャラ管理で作成
+                      キャラクターと世界観で作る
                     </button>
                   </p>
                 ) : (
@@ -178,7 +178,7 @@ export default function SessionEditor({ session, notice, onClose }: Props) {
                     </div>
                     {d.characterIds.length > 0 && d.narrativeStyle === 'chat' && (
                       <div className="desc" style={{ marginTop: 8 }}>
-                        キャラ別モデルの一括設定は「AIと出力」タブから行えます。
+                        キャラクターごとのモデルの一括設定は「AIと出力」タブから行えます。
                       </div>
                     )}
 
@@ -267,7 +267,7 @@ export default function SessionEditor({ session, notice, onClose }: Props) {
                     毎ターン送り直されるので短く保ってください。「頼まれても簡単には引き受けない人物」のような
                     人物の芯は、ここよりキャラクターの人格欄に書く方がよく効きます。
                     「人の出入りが多い場所」のような登場の作法もここに書けます（誰がその場に居るかは
-                    シーンの状況メモが持つので、ここには世界ぜんたいの傾向だけを書きます）。
+                    章の状況メモが持つので、ここには世界ぜんたいの傾向だけを書きます）。
                   </div>
                   <textarea
                     rows={2}
@@ -309,25 +309,25 @@ export default function SessionEditor({ session, notice, onClose }: Props) {
                   <div className="field">
                     <label>最初の方向付け（非表示・任意）</label>
                     <div className="desc">
-                      最初のシーンの間だけ AI に渡される非表示の指示です。チャットには表示されません。
-                      序盤の展開・出会わせ方など立ち上がりの方向付けに（2シーン目からは効かなくなります）。
+                      最初の章の間だけ AI に渡される非表示の指示です。本文には出ません。
+                      序盤の展開・出会わせ方など立ち上がりの方向付けに（2章目からは効かなくなります）。
                     </div>
                     <textarea
                       rows={3}
                       value={d.story.initialDirective ?? ''}
-                      placeholder="例: 最初のシーンでは謎の少女と出会わせ、事件の予兆だけを見せる。正体はまだ明かさない。"
+                      placeholder="例: 最初の章では謎の少女と出会わせ、事件の予兆だけを見せる。正体はまだ明かさない。"
                       onChange={(e) => patch({ story: { ...d.story, initialDirective: e.target.value } })}
                     />
                   </div>
                   <div className="field">
-                    <label>導入（最初のシーン・任意）</label>
+                    <label>導入（最初の章・任意）</label>
                     <div className="desc">
                       物語の書き出しをこちらで用意します。入力すると「物語をはじめる」で AI に生成させず、
                       この文章がそのまま最初の本文として表示されます（開始の1回きり。空なら従来どおり AI が導入を生成）。
                     </div>
                     <input
                       value={d.story.openingTitle}
-                      placeholder="導入シーンの見出し（例: 前夜の凶報）"
+                      placeholder="導入の章の見出し（例: 前夜の凶報）"
                       style={{ marginBottom: 6 }}
                       onChange={(e) => patch({ story: { ...d.story, openingTitle: e.target.value } })}
                     />
@@ -346,7 +346,7 @@ export default function SessionEditor({ session, notice, onClose }: Props) {
                   毎ターン送り直されるので短く保ってください。「頼まれても簡単には引き受けない人物」のような
                   人物の芯は、ここよりキャラクターの人格欄に書く方がよく効きます。
                   「人の出入りが多い場所」のような登場の作法もここに書けます（誰がその場に居るかは
-                  シーンの状況メモが持つので、ここには世界ぜんたいの傾向だけを書きます）。
+                  章の状況メモが持つので、ここには世界ぜんたいの傾向だけを書きます）。
                 </div>
                 <textarea
                   rows={2}
@@ -365,7 +365,7 @@ export default function SessionEditor({ session, notice, onClose }: Props) {
                 <label>現在の時点</label>
                 <div className="desc">
                   物語のいまがいつか。書き方は自由です（「8月31日 朝」「6月半ば」「翌年の春」）。
-                  以後はシーンが終わるたびに AI が本文から読み取って更新します。
+                  以後は章を閉じるたびに AI が本文から読み取って更新します。
                 </div>
                 <input
                   value={d.state.now}
@@ -430,7 +430,7 @@ export default function SessionEditor({ session, notice, onClose }: Props) {
                 </div>
                 <div className="row2" style={{ marginTop: 4 }}>
                   <div>
-                    <div className="sub-label" style={{ marginBottom: 5 }}>レビュー用（シーン要約・提案）</div>
+                    <div className="sub-label" style={{ marginBottom: 5 }}>章を閉じるとき（章のまとめ・次の候補）</div>
                     <div className="model-chip-row">
                       {/* 生の参照（`providerId::model`）ではなくラベルで出す。
                           カスタム接続先の providerId は UUID なので、そのまま出すと桁外れに長くなる */}
@@ -498,7 +498,7 @@ export default function SessionEditor({ session, notice, onClose }: Props) {
               <div className="field">
                 <label>文体スタイル</label>
                 <div className="desc">
-                  小説形式＝地の文と「」セリフを混ぜた文章。会話劇＝キャラ別の発言（吹き出し）。
+                  小説形式＝地の文と「」セリフを混ぜた文章。会話劇＝キャラクターごとの発言（吹き出し）。
                 </div>
                 <div className="seg">
                   {(['novel', 'chat'] as const).map((m) => (

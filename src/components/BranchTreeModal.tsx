@@ -309,7 +309,7 @@ export function BranchTreeBody({ session }: { session: Session }) {
     if (busy) return
     if (
       !(await appConfirm(
-        'この地点に戻りますか？\nここから物語を進めると、この先の記録は上書きされて消えます（シーンをまたぐ大きな上書きになる場合は、その時に分岐として残すか確認します）。',
+        'この地点に戻りますか？\nここから物語を進めると、この先の記録は上書きされて消えます（章をまたぐ大きな上書きになる場合は、その時に分岐として残すか確認します）。',
       ))
     )
       return
@@ -564,7 +564,7 @@ export function BranchTreeBody({ session }: { session: Session }) {
                       doRestore(node.parentId!)
                     }}
                   >
-                    <Icon name="corner-up-left" size={14} /> このシーンの開始前に戻る
+                    <Icon name="corner-up-left" size={14} /> この章の始まりに戻る
                   </button>
                 )}
                 <button

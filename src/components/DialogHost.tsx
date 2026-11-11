@@ -34,8 +34,7 @@ function DialogView({ req }: { req: DialogRequest }) {
   return (
     <div className="overlay" onClick={cancel}>
       <div
-        className="modal"
-        style={{ maxWidth: 420 }}
+        className="modal modal-dialog"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && !e.nativeEvent.isComposing && req.kind !== 'choices') {

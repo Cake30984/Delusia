@@ -455,7 +455,7 @@ button.margin-note:hover {
   max-height: 200px;
   resize: none;
   padding: 11px 48px 11px 14px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--edge);
   border-radius: var(--r-input);
   background: var(--bg);
   color: var(--ink);
@@ -788,7 +788,7 @@ button.margin-note:hover {
   width: 100%;
   box-sizing: border-box;
   padding: 8px 10px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--edge);
   border-radius: var(--r-input);
   background: var(--bg);
   color: var(--ink);
@@ -850,7 +850,7 @@ button.margin-note:hover {
   width: 100%;
   box-sizing: border-box;
   padding: 8px 10px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--edge);
   border-radius: var(--r-input);
   background: var(--bg);
   color: var(--ink);

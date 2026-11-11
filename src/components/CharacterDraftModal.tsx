@@ -198,7 +198,7 @@ export default function CharacterDraftModal({ session, name, note, onClose }: Pr
       draft
       draftNotice={
         error ||
-        `本文から起案した下書きです。内容を確認・編集して保存すると、キャラクターライブラリに加わり、このセッションにも参加します。`
+        `本文から起案した下書きです。内容を確認・編集して保存すると、キャラクターと世界観に加わり、この物語にも参加します。`
       }
       onSaved={(c) => addDiscoveredCharacter(session.id, c)}
       onClose={onClose}

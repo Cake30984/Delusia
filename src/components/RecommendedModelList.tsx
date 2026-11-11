@@ -10,10 +10,10 @@ import type { Provider } from '../types'
 
 const inputStyle = {
   width: '100%',
-  background: 'var(--bg-elev2)',
-  border: '1px solid var(--border)',
-  borderRadius: 'var(--radius-sm)',
-  color: 'var(--text)',
+  background: 'var(--bg)',
+  border: '1px solid var(--edge)',
+  borderRadius: 'var(--r-input)',
+  color: 'var(--ink)',
   padding: '9px 11px',
   outline: 'none',
   fontSize: 14,
@@ -104,7 +104,7 @@ export default function RecommendedModelList({
             key={m.id}
             type="button"
             className={'model-row' + (selected ? ' selected' : '')}
-            style={{ width: '100%', textAlign: 'left', color: 'var(--text)', background: selected ? undefined : 'transparent' }}
+            style={{ width: '100%', textAlign: 'left', color: 'var(--ink)', background: selected ? undefined : 'transparent' }}
             aria-pressed={selected}
             onClick={() => onChange(m.id)}
           >
@@ -117,7 +117,7 @@ export default function RecommendedModelList({
             <div className="m-ctx" style={{ whiteSpace: 'nowrap', textAlign: 'right', lineHeight: 1.5 }}>
               <div>入力 {formatPerMillion(m.promptPerMillion)}</div>
               <div>出力 {formatPerMillion(m.completionPerMillion)}</div>
-              <div style={{ color: 'var(--text-faint)' }}>1M トークンあたり</div>
+              <div style={{ color: 'var(--sub)' }}>1M トークンあたり</div>
             </div>
           </button>
         )
@@ -125,7 +125,7 @@ export default function RecommendedModelList({
       <button
         type="button"
         className={'model-row' + (custom ? ' selected' : '')}
-        style={{ width: '100%', textAlign: 'left', color: 'var(--text)', background: custom ? undefined : 'transparent' }}
+        style={{ width: '100%', textAlign: 'left', color: 'var(--ink)', background: custom ? undefined : 'transparent' }}
         aria-pressed={custom}
         onClick={() => {
           if (!custom) onChange('')

@@ -123,7 +123,7 @@ export default function CassetteEditor({ cassette, seedSession, onClose }: Props
             [
               ['basic', '基本', 'settings'],
               ['world', '世界観', 'globe'],
-              ['cast', '登場キャラ', 'users'],
+              ['cast', '登場人物', 'users'],
               ['start', '開始・進行', 'hourglass'],
             ] as const
           ).map(([t, label, icon]) => (
@@ -248,12 +248,12 @@ export default function CassetteEditor({ cassette, seedSession, onClose }: Props
           {tab === 'cast' && (
             <>
             <div className="field">
-              <label>登場キャラ</label>
+              <label>登場人物</label>
               {characters.length === 0 ? (
                 <p className="inline-empty">
                   キャラクターがありません。
                   <button className="link" onClick={() => { onClose(); setView('characters') }}>
-                    キャラ管理で作成
+                    キャラクターと世界観で作る
                   </button>
                 </p>
               ) : (
@@ -321,23 +321,23 @@ export default function CassetteEditor({ cassette, seedSession, onClose }: Props
               <div className="field">
                 <label>最初の方向付け（非表示・任意）</label>
                 <div className="desc">
-                  最初のシーンの間だけ AI に渡される非表示の指示。チャットには表示されません。
+                  最初の章の間だけ AI に渡される非表示の指示。本文には出ません。
                 </div>
                 <textarea
                   rows={3}
                   value={s.story.initialDirective ?? ''}
-                  placeholder="例: 最初のシーンでは謎の少女と出会わせ、事件の予兆だけを見せる。"
+                  placeholder="例: 最初の章では謎の少女と出会わせ、事件の予兆だけを見せる。"
                   onChange={(e) => patchSession({ story: { ...s.story, initialDirective: e.target.value } })}
                 />
               </div>
               <div className="field">
-                <label>導入（最初のシーン・任意）</label>
+                <label>導入（最初の章・任意）</label>
                 <div className="desc">
                   入力すると「物語をはじめる」で AI に生成させず、この文章がそのまま最初の本文になります。
                 </div>
                 <input
                   value={s.story.openingTitle}
-                  placeholder="導入シーンの見出し（例: 前夜の凶報）"
+                  placeholder="導入の章の見出し（例: 前夜の凶報）"
                   style={{ marginBottom: 6 }}
                   onChange={(e) => patchSession({ story: { ...s.story, openingTitle: e.target.value } })}
                 />

@@ -221,7 +221,7 @@ export default function App() {
     root.setProperty('--speaker-icon-size', `${ui.speakerIconSize}px`)
     // 色分けONは tokens.css の既定（--dialogue）に戻す。OFF のときだけ本文色で上書き（A7）
     if (ui.dialogueTint) root.removeProperty('--dialogue')
-    else root.setProperty('--dialogue', 'var(--text)')
+    else root.setProperty('--dialogue', 'var(--ink)')
   }, [ui.fontSize, ui.lineHeight, ui.contentWidth, ui.speakerIconSize, ui.dialogueTint])
 
   // 色・明るさ・本文の書体を <html> の属性へ（P9）。値は tokens.css が属性で当てる。

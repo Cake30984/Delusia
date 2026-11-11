@@ -74,37 +74,6 @@
   margin-left: 2px;
 }
 
-/* 素材の3タブ（行き先の1つ。戻るでタブも戻る） */
-.shell-tabs {
-  display: flex;
-  gap: var(--sp-1);
-  padding: var(--sp-2) var(--sp-4) 0;
-  border-bottom: 1px solid var(--line);
-  flex-shrink: 0;
-  overflow-x: auto;
-}
-.shell-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: var(--tap);
-  padding: 0 var(--sp-4);
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--sub);
-  font-size: var(--fs-14);
-  white-space: nowrap;
-}
-.shell-tab:hover {
-  color: var(--ink);
-}
-.shell-tab.on {
-  color: var(--ink);
-  font-weight: 700;
-  border-bottom-color: var(--accent);
-}
-
 /* ホーム（P9 段6。続きから・新しい物語を始める・ほかの物語） */
 .home {
   max-width: 720px;
@@ -522,7 +491,7 @@
 
 .session-item {
   padding: 8px 10px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-input);
   margin-bottom: 4px;
   cursor: pointer;
   display: flex;
@@ -533,18 +502,18 @@
 }
 
 .session-item:hover {
-  background: var(--bg-elev2);
+  background: var(--tint);
 }
 
 /* 表示中のセッション（「いまここ」）は控えめに＝左に細いアクセント帯だけ（FB3-A5） */
 .session-item.active {
-  background: var(--bg-elev2);
-  border-color: var(--border);
+  background: var(--tint);
+  border-color: var(--line);
   box-shadow: inset 2px 0 0 0 var(--accent);
 }
 /* 複数選択中のセッションははっきり強調（アクセント面＋内側リング。FB2-D / FB3-A5） */
 .session-item.selected {
-  background: var(--accent-soft);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
   border-color: var(--accent);
   box-shadow: 0 0 0 1px var(--accent) inset;
 }
@@ -556,7 +525,7 @@
   padding: 6px 12px;
   font-size: 12px;
   font-weight: 600;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--line);
 }
 .sidebar-sel-bar .btn {
   padding: 3px 10px;
@@ -573,7 +542,7 @@
 
 .session-item .meta {
   font-size: 11px;
-  color: var(--text-faint);
+  color: var(--sub);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -583,9 +552,9 @@
   font-size: 10px;
   padding: 1px 6px;
   border-radius: 999px;
-  background: var(--bg-elev2);
-  border: 1px solid var(--border);
-  color: var(--text-dim);
+  background: var(--tint);
+  border: 1px solid var(--line);
+  color: var(--sub);
 }
 
 .badge.roleplay {
@@ -604,7 +573,7 @@
 
 .sidebar-archive-toggle {
   padding: 8px 12px 12px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--line);
 }
 .sidebar-archive-toggle button {
   width: 100%;
@@ -624,9 +593,9 @@
 
 .model-chip {
   font-size: 12px;
-  color: var(--text-dim);
-  background: var(--bg-elev2);
-  border: 1px solid var(--border);
+  color: var(--sub);
+  background: var(--tint);
+  border: 1px solid var(--line);
   padding: 6px 10px;
   border-radius: 999px;
   max-width: 220px;
@@ -663,7 +632,7 @@
 }
 .model-chip:hover {
   border-color: var(--accent);
-  color: var(--text);
+  color: var(--ink);
 }
 
 /* ---------- 進行状態インジケータ（UI-2） ---------- */
@@ -671,9 +640,9 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: var(--accent-soft);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
   border: 1px solid var(--accent);
-  color: var(--text);
+  color: var(--ink);
   padding: 6px 12px;
   border-radius: 999px;
   font-size: 12px;
@@ -688,7 +657,7 @@
   animation: blink 1s steps(2) infinite;
 }
 .activity-more {
-  color: var(--text-faint);
+  color: var(--sub);
 }
 .activity-row {
   display: flex;
@@ -709,22 +678,25 @@
 .icon-btn {
   position: relative;
   background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text-dim);
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  color: var(--sub);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-input);
   display: grid;
   place-items: center;
   font-size: 16px;
 }
-.icon-btn:hover {
-  color: var(--text);
-  border-color: var(--accent);
+.icon-btn:hover:not(:disabled) {
+  color: var(--ink);
+  background: var(--tint);
+}
+.icon-btn:disabled {
+  opacity: 0.4;
 }
 .icon-btn.on {
   color: var(--accent);
-  background: var(--accent-soft);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
   border-color: var(--accent);
 }
 .icon-badge {
@@ -794,30 +766,12 @@
   display: grid;
   place-items: center;
   text-align: center;
-  color: var(--text-dim);
+  color: var(--sub);
   padding: 40px;
 }
 .empty h2 {
-  color: var(--text);
+  color: var(--ink);
   margin-bottom: 6px;
-}
-.empty .cta {
-  margin-top: 18px;
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-}
-.empty .cta button {
-  background: var(--accent);
-  border: none;
-  color: var(--on-accent);
-  padding: 10px 18px;
-  border-radius: var(--radius-sm);
-  font-size: 14px;
-}
-.empty .cta button.ghost {
-  background: var(--bg-elev2);
-  border: 1px solid var(--border);
 }
 
 /* 保存データを読めなかった時の案内（R1）。文章が続くので中央寄せをやめて読める幅に収める */
@@ -838,10 +792,10 @@
   display: inline-block;
   margin-top: 4px;
   padding: 4px 8px;
-  background: var(--bg-elev2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text);
+  background: var(--tint);
+  border: 1px solid var(--line);
+  border-radius: var(--r-input);
+  color: var(--ink);
   word-break: break-all;
 }
 
@@ -853,11 +807,11 @@
   padding: 14px 12px;
 }
 .nav-btn {
-  background: var(--bg-elev2);
-  border: 1px solid var(--border);
-  color: var(--text-dim);
+  background: var(--tint);
+  border: 1px solid var(--line);
+  color: var(--sub);
   padding: 9px 10px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-input);
   font-size: 13px;
   display: flex;
   align-items: center;
@@ -866,13 +820,13 @@
   transition: 0.12s;
 }
 .nav-btn:hover {
-  color: var(--text);
+  color: var(--ink);
   border-color: var(--accent);
 }
 .nav-btn.on {
-  background: var(--accent-soft);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
   border-color: var(--accent);
-  color: var(--text);
+  color: var(--ink);
 }
 
 .session-item .meta .cast {
@@ -891,34 +845,11 @@
   flex: 1;
   min-height: 0;
 }
-/* System ページ等、全幅だと間延びする内容を中央寄せでまとめる（F0/R11） */
-.page-narrow {
-  max-width: 720px;
-  margin: 0 auto;
-}
-.library-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 22px;
-}
-.library-head h2 {
-  margin: 0;
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-/* 見出し内の SVG アイコン（FB8-E2。絵文字見出しの置き換え） */
-.head-icon {
-  color: var(--text-dim);
-  flex-shrink: 0;
-}
 .library-empty {
-  color: var(--text-dim);
-  background: var(--bg-elev);
-  border: 1px dashed var(--border);
-  border-radius: var(--radius);
+  color: var(--sub);
+  background: var(--tint);
+  border: 1px dashed var(--line);
+  border-radius: var(--r-card);
   padding: 40px;
   text-align: center;
 }
@@ -926,7 +857,7 @@
 .library.drag-over {
   outline: 2px dashed var(--accent);
   outline-offset: -6px;
-  background: var(--accent-soft);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
 }
 
 /* ---------- ページ化エディタ（WorldEditor。UI-6） ---------- */
@@ -963,7 +894,7 @@
 }
 .nav-group-heading {
   font-size: 11px;
-  color: var(--text-faint);
+  color: var(--sub);
   letter-spacing: 0.04em;
   padding: 0 2px;
   user-select: none;
@@ -972,12 +903,6 @@
   flex: 1;
   min-width: 0;
   max-width: 720px;
-}
-
-.card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 14px;
 }
 
 /* ---------- ゲームカセット棚（FB2-E） ---------- */
@@ -989,9 +914,9 @@
 .cassette-card {
   display: flex;
   flex-direction: column;
-  background: var(--bg-elev);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  background: var(--tint);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
   overflow: hidden;
   transition: 0.15s;
 }
@@ -1001,7 +926,7 @@
 }
 .cassette-cover {
   aspect-ratio: 1 / 1;
-  background: var(--bg-elev2);
+  background: var(--tint);
   overflow: hidden;
 }
 .cassette-cover img {
@@ -1022,7 +947,7 @@
 .cover-choice {
   padding: 0;
   border: 3px solid transparent;
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-input);
   background: none;
   cursor: pointer;
   display: grid;
@@ -1044,12 +969,12 @@
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  color: var(--text-dim);
-  background: var(--bg-elev2);
+  color: var(--sub);
+  background: var(--tint);
 }
 .cover-choice .cover-cap {
   font-size: 10.5px;
-  color: var(--text-dim);
+  color: var(--sub);
 }
 .cassette-body {
   padding: 12px 14px 14px;
@@ -1083,33 +1008,13 @@
   gap: 10px;
   padding: 8px 12px;
   margin-bottom: 12px;
-  background: var(--accent-soft);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
   border: 1px solid var(--accent);
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-input);
 }
 .sel-bar-count {
   font-size: 13px;
   font-weight: 600;
-}
-.entity-card {
-  display: flex;
-  gap: 12px;
-  background: var(--bg-elev);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px;
-  cursor: pointer;
-  transition: 0.15s;
-}
-.entity-card:hover {
-  border-color: var(--accent);
-  transform: translateY(-1px);
-}
-/* 複数選択中のカード（FB2-D） */
-.entity-card.selected {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-  box-shadow: 0 0 0 1px var(--accent) inset;
 }
 .entity-avatar {
   width: 44px;
@@ -1122,33 +1027,23 @@
   overflow: hidden;
   color: #fff;
 }
-.entity-body {
-  min-width: 0;
-  flex: 1;
-}
 .entity-name {
   font-weight: 600;
   margin-bottom: 3px;
 }
 .entity-desc {
   font-size: 12.5px;
-  color: var(--text-dim);
+  color: var(--sub);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.tag-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-top: 8px;
-}
 .tag {
   font-size: 11px;
-  background: var(--bg-elev2);
-  border: 1px solid var(--border);
-  color: var(--text-dim);
+  background: var(--tint);
+  border: 1px solid var(--line);
+  color: var(--sub);
   padding: 1px 8px;
   border-radius: 999px;
 }

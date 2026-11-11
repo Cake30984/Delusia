@@ -25,10 +25,10 @@ interface Props {
 
 const fieldStyle = {
   width: '100%',
-  background: 'var(--bg-elev2)',
-  border: '1px solid var(--border)',
-  borderRadius: 'var(--radius-sm)',
-  color: 'var(--text)',
+  background: 'var(--tint)',
+  border: '1px solid var(--line)',
+  borderRadius: 'var(--r-input)',
+  color: 'var(--ink)',
   padding: '9px 11px',
   outline: 'none',
   fontSize: 14,
@@ -88,7 +88,7 @@ export default function StoryExportModal({ sessionId, nodeId, onClose }: Props) 
     return (
       <ModalShell title="物語を書き出す" onClose={onClose}>
         <p className="notice" style={{ color: 'var(--danger)' }}>
-          {snapshotError || 'セッションが見つかりません。'}
+          {snapshotError || '物語が見つかりません。'}
         </p>
       </ModalShell>
     )
@@ -157,21 +157,21 @@ export default function StoryExportModal({ sessionId, nodeId, onClose }: Props) 
       <label className="sub-label">範囲</label>
       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <button className={'btn' + (unit === 'session' ? ' primary' : '')} onClick={() => setUnit('session')}>
-          セッション全体
+          物語の全体
         </button>
         <button
           className={'btn' + (unit === 'scene' ? ' primary' : '')}
           onClick={() => setUnit('scene')}
           disabled={scenes.length === 0}
         >
-          シーン単位
+          章ごと
         </button>
       </div>
       {unit === 'scene' && (
         <select style={fieldStyle} value={sceneId} onChange={(e) => setSceneId(e.target.value)}>
           {scenes.map((s) => (
             <option key={s.id} value={s.id}>
-              {s.title || '無題のシーン'}
+              {s.title || '無題の章'}
             </option>
           ))}
         </select>

@@ -116,7 +116,7 @@ export default function StatusPanel({ session, onClose }: Props) {
                     ))}
                   </>
                 ) : (
-                  <div className="desc">まだ関係性の記録はありません（シーンを終えると生成されます）。</div>
+                  <div className="desc">まだ関係性の記録はありません（章を閉じると生成されます）。</div>
                 )}
                 {mood && <div className="desc" style={{ marginTop: 4 }}>気分: {mood}</div>}
               </div>

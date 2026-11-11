@@ -77,12 +77,12 @@ export default function ModelPicker({ current, onPick, onClose }: Props) {
       {/* 接続先セレクタ */}
           {providers.length > 1 && (
             <div style={{ marginBottom: 12 }}>
-              <div className="seg" style={{ display: 'flex', width: '100%', borderRadius: 'var(--radius-sm)' }}>
+              <div className="seg" style={{ display: 'flex', width: '100%', borderRadius: 'var(--r-input)' }}>
                 {providers.map((p) => (
                   <button
                     key={p.id}
                     className={selectedProviderId === p.id ? 'on' : ''}
-                    style={{ flex: 1, borderRadius: 'var(--radius-sm)' }}
+                    style={{ flex: 1, borderRadius: 'var(--r-input)' }}
                     onClick={() => setSelectedProviderId(p.id)}
                   >
                     {p.label}
@@ -92,7 +92,7 @@ export default function ModelPicker({ current, onPick, onClose }: Props) {
             </div>
           )}
           {providers.length === 1 && (
-            <div style={{ marginBottom: 8, fontSize: 12, color: 'var(--text-faint)' }}>
+            <div style={{ marginBottom: 8, fontSize: 12, color: 'var(--sub)' }}>
               接続先: {providers[0].label}
             </div>
           )}
@@ -104,9 +104,9 @@ export default function ModelPicker({ current, onPick, onClose }: Props) {
             onChange={(e) => setQ(e.target.value)}
             autoFocus
           />
-          {isLoading && <p style={{ color: 'var(--text-dim)' }}>モデルを読み込み中…</p>}
+          {isLoading && <p style={{ color: 'var(--sub)' }}>モデルを読み込み中…</p>}
           {!isLoading && models.length === 0 && (
-            <p style={{ color: 'var(--text-dim)' }}>
+            <p style={{ color: 'var(--sub)' }}>
               モデル一覧を取得できませんでした。設定で API キーを確認するか再試行してください。
             </p>
           )}

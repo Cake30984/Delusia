@@ -19,7 +19,7 @@ export default function SceneEditor({ scene, onClose }: Props) {
 
   return (
     <ModalShell
-      title="シーン設定"
+      title="章の名前と状況"
       onClose={onClose}
       dirty={dirty}
       footer={
@@ -44,7 +44,7 @@ export default function SceneEditor({ scene, onClose }: Props) {
       }
     >
           <div className="field">
-            <label>シーン名</label>
+            <label>章の名前</label>
             <input
               value={d.title}
               placeholder="例: 1日目・放課後の教室"
@@ -55,7 +55,7 @@ export default function SceneEditor({ scene, onClose }: Props) {
           <div className="field">
             <label>状況メモ（時・場所・その場に居る人物）</label>
             <div className="desc">
-              ここに書いた顔ぶれが、このシーンに登場する人物の目安になります。
+              ここに書いた顔ぶれが、この章に登場する人物の目安になります。
             </div>
             <textarea
               rows={2}
@@ -68,7 +68,7 @@ export default function SceneEditor({ scene, onClose }: Props) {
           {(d.summary.trim() || d.endedAt) && (
             <div className="field">
               <label>引き継ぎ要約（編集可）</label>
-              <div className="desc">このシーンのあらすじ。次シーン以降に引き継がれます。</div>
+              <div className="desc">この章のあらすじ。次の章からに引き継がれます。</div>
               <textarea
                 rows={5}
                 value={d.summary}

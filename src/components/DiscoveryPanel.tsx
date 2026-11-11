@@ -73,7 +73,7 @@ export default function DiscoveryPanel({ session, scope, onClose }: Props) {
     if (!session.worldId) return
     if (
       !(await appConfirm(
-        `このロアを元のワールド${worldName ? `「${worldName}」` : ''}へ反映しますか？\n以後は発見ログから消え、ワールド編集に表示されます。\n（素材への反映はすべてのセッション・すべての分岐に共有され、分岐を戻しても巻き戻りません）`,
+        `このロアを元の世界観${worldName ? `「${worldName}」` : ''}へ反映しますか？\n以後は発見ログから消え、世界観の編集に出ます。\n（素材への反映はすべての物語・すべての分岐に共有され、分岐を戻しても巻き戻りません）`,
       ))
     )
       return
@@ -84,7 +84,7 @@ export default function DiscoveryPanel({ session, scope, onClose }: Props) {
   const promoteDev = async (characterId: string, dev: Development) => {
     if (
       !(await appConfirm(
-        `この設定を「${charName(characterId)}」の正式なプロフィールへ反映しますか？\n以後は発見ログから消え、キャラ編集に表示されます。\n（素材への反映はすべてのセッション・すべての分岐に共有され、分岐を戻しても巻き戻りません）`,
+        `この設定を「${charName(characterId)}」の正式なプロフィールへ反映しますか？\n以後は発見ログから消え、キャラクターの編集に出ます。\n（素材への反映はすべての物語・すべての分岐に共有され、分岐を戻しても巻き戻りません）`,
       ))
     )
       return
@@ -144,14 +144,14 @@ export default function DiscoveryPanel({ session, scope, onClose }: Props) {
     >
       {scopeEmpty && (
         <p className="inline-empty">
-          まだ発見された設定はありません。シーンを終えるとレビューでここに追記されます。
+          まだ発見された設定はありません。章を閉じると、ここに書き足されます。
         </p>
       )}
 
       {isLore && ov.lore.length > 0 && (
         <div className="field">
           <div className="desc">
-            このセッションで発見された追加ロア。元のワールドは変更されません。
+            この物語で発見された追加ロア。元のワールドは変更されません。
           </div>
           {ov.lore.map((e) => (
             <div key={e.id} className={'lore-entry' + (e.enabled ? '' : ' disabled')}>
@@ -204,7 +204,7 @@ export default function DiscoveryPanel({ session, scope, onClose }: Props) {
       {!isLore && scopeGroup && scopeGroup.developments.length > 0 && (
         <div className="field">
           <div className="desc">
-            このセッションで判明・深化した設定。チェックを外すとプロンプトに含めません。
+            この物語で判明・深化した設定。チェックを外すとプロンプトに含めません。
           </div>
           <div className="growth-list">
             {scopeGroup.developments.map((dev) => (

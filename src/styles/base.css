@@ -11,7 +11,7 @@ body,
 
 body {
   background: var(--bg);
-  color: var(--text);
+  color: var(--ink);
   font-size: 15px;
   line-height: 1.65;
 }
@@ -35,18 +35,13 @@ select {
 /* ---------- 雑多 ---------- */
 .divider {
   border: none;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--line);
   margin: 20px 0;
 }
 .notice {
   font-size: 13px;
   color: var(--accent);
-  background: var(--accent-soft);
-  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-radius: var(--r-input);
   padding: 8px 12px;
-}
-.chat-hint {
-  color: var(--text-dim);
-  text-align: center;
-  padding: 40px 0;
 }

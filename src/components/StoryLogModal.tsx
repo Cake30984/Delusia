@@ -39,8 +39,8 @@ export default function StoryLogModal({ session, onClose, onGenIllustration }: P
       }
     >
           {session.scenes.every((sc) => !sc.summary.trim()) ? (
-            <p style={{ color: 'var(--text-dim)' }}>
-              まだ要約がありません。シーンを「✓ このシーンを終える」で締めると、ここにあらすじが蓄積されます。
+            <p style={{ color: 'var(--sub)' }}>
+              まだ要約がありません。章を閉じると、ここにあらすじが蓄積されます。
             </p>
           ) : (
             <div className="log-list">
@@ -56,7 +56,7 @@ export default function StoryLogModal({ session, onClose, onGenIllustration }: P
                       {onGenIllustration && (
                         <button
                           className="icon-btn small"
-                          title="このシーンに挿絵を生成（シーン末尾に表示）"
+                          title="この章の挿絵を描く（章の終わりに出す）"
                           onClick={() => onGenIllustration(sc.id)}
                         >
                           <Icon name="palette" size={14} />

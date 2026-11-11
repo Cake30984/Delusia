@@ -1,6 +1,13 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { useImageUrl } from '../lib/imageStore'
+import { contrastRatio, isHexColor } from '../lib/palette'
 import type { Avatar } from '../types'
+
+/** イニシャルの文字色。人物ごとの色の上で白と黒のうち読みやすい方（色が無ければ画面の文字色） */
+function initialColor(bg: string | undefined): string {
+  if (!bg || !isHexColor(bg)) return 'var(--ink)'
+  return contrastRatio('#FFFFFF', bg) >= contrastRatio('#000000', bg) ? '#FFFFFF' : '#000000'
+}
 
 interface Props {
   avatar?: Avatar
@@ -40,7 +47,7 @@ export default function EntityAvatar({ avatar, name, className, size, style }: P
   return (
     <div
       className={className}
-      style={{ ...dimStyle, ...style, background: avatar?.color ?? 'var(--bg-elev2)' }}
+      style={{ ...dimStyle, ...style, background: avatar?.color ?? 'var(--tint)', color: initialColor(avatar?.color) }}
     >
       {initial}
     </div>

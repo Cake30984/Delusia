@@ -35,9 +35,7 @@ export type IconName =
   | 'corner-up-left'
   | 'scissors'
   | 'users'
-  | 'user-plus'
   | 'globe'
-  | 'smile'
   | 'clapperboard'
   | 'broom'
   | 'arrow-up'
@@ -45,8 +43,6 @@ export type IconName =
   | 'chevron-right'
   | 'chevron-down'
   | 'flag'
-  | 'trophy'
-  | 'lock'
   | 'dice'
   | 'sparkles'
   | 'folder'
@@ -54,8 +50,6 @@ export type IconName =
   | 'alert-triangle'
   | 'panel-right'
   | 'copy'
-  | 'zoom-in'
-  | 'skip-forward'
   | 'home'
   | 'chevron-left'
   | 'search'
@@ -263,27 +257,12 @@ const PATHS: Record<IconName, ReactNode> = {
     </>
   ),
   // 発見キャラ（FB7-E）: 人＋プラス
-  'user-plus': (
-    <>
-      <circle cx="9.5" cy="8" r="3.4" />
-      <path d="M3.5 20c0-3.2 2.7-5.5 6-5.5s6 2.3 6 5.5" />
-      <path d="M18.5 8.5v5M16 11h5" />
-    </>
-  ),
   globe: (
     <>
       <circle cx="12" cy="12" r="9" />
       <path d="M3 12h18" />
       <path d="M12 3c3 3 3 15 0 18" />
       <path d="M12 3c-3 3-3 15 0 18" />
-    </>
-  ),
-  smile: (
-    <>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M8 14s1.5 2 4 2 4-2 4-2" />
-      <circle cx="9" cy="9" r="1" fill="currentColor" stroke="none" />
-      <circle cx="15" cy="9" r="1" fill="currentColor" stroke="none" />
     </>
   ),
   clapperboard: (
@@ -323,22 +302,6 @@ const PATHS: Record<IconName, ReactNode> = {
     <>
       <path d="M5 21V4" />
       <path d="M5 4c4-2 6 2 10 0v9c-4 2-6-2-10 0" />
-    </>
-  ),
-  trophy: (
-    <>
-      <path d="M7 4h10v5a5 5 0 0 1-10 0z" />
-      <path d="M7 6H4a3 3 0 0 0 3.2 4" />
-      <path d="M17 6h3a3 3 0 0 1-3.2 4" />
-      <path d="M12 14v4" />
-      <path d="M8 21h8" />
-      <path d="M9 21c0-2 1.2-3 3-3s3 1 3 3" />
-    </>
-  ),
-  lock: (
-    <>
-      <rect x="5" y="11" width="14" height="9" rx="2" />
-      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
     </>
   ),
   dice: (
@@ -388,18 +351,6 @@ const PATHS: Record<IconName, ReactNode> = {
     </>
   ),
   // 尺の指示（F4）: 拡大鏡＝じっくり描く／スキップ＝先へ飛ばす
-  'zoom-in': (
-    <>
-      <circle cx="11" cy="11" r="7" />
-      <path d="M21 21l-4.3-4.3M11 8v6M8 11h6" />
-    </>
-  ),
-  'skip-forward': (
-    <>
-      <path d="M5 4l10 8-10 8z" fill="currentColor" stroke="none" />
-      <path d="M19 4v16" />
-    </>
-  ),
 }
 
 export function Icon({

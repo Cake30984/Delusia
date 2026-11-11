@@ -2,7 +2,7 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--overlay);
   display: grid;
   place-items: center;
   z-index: var(--z-modal);
@@ -29,7 +29,7 @@
   width: auto;
   height: auto;
   object-fit: contain;
-  border-radius: var(--radius);
+  border-radius: var(--r-card);
   cursor: zoom-out;
 }
 .zoom-caption {
@@ -41,61 +41,76 @@
 .prompt-box {
   margin-top: 8px;
   padding: 8px 10px;
-  background: var(--bg-elev2);
-  border-radius: var(--radius-sm);
+  background: var(--tint);
+  border-radius: var(--r-input);
 }
 .prompt-box-label {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: var(--text-faint);
+  color: var(--sub);
   text-transform: uppercase;
 }
 .prompt-box-text {
   margin-top: 4px;
   white-space: pre-wrap;
-  color: var(--text-dim);
+  color: var(--sub);
   font-size: 12.5px;
 }
 
+/* PC は真ん中に重ねる（ページと同じ背景・角丸 16）。モバイルは全画面（下の @media） */
 .modal {
-  background: var(--bg-elev);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
   width: 100%;
   max-width: 560px;
   max-height: 86vh;
   overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
 }
 .modal-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 22px;
-  border-bottom: 1px solid var(--border);
+  gap: var(--sp-2);
+  min-height: 56px;
+  box-sizing: border-box;
+  padding: 10px 14px 10px 22px;
+  border-bottom: 1px solid var(--line);
   position: sticky;
   top: 0;
   z-index: 1;
-  background: var(--bg-elev);
+  background: var(--bg);
 }
 .modal-head h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--fs-16);
+  font-weight: 700;
+}
+.modal-head .icon-btn {
+  width: var(--tap);
+  height: var(--tap);
 }
 .modal-body {
-  padding: 18px 20px;
+  padding: 18px 22px;
 }
 .modal-foot {
-  padding: 16px 22px;
-  border-top: 1px solid var(--border);
+  padding: 14px 22px;
+  border-top: 1px solid var(--line);
   display: flex;
   justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 10px;
   position: sticky;
   bottom: 0;
   z-index: 1;
-  background: var(--bg-elev);
+  background: var(--bg);
+}
+/* 確認・入力の小さなダイアログ */
+.modal.modal-dialog {
+  max-width: 420px;
 }
 .modal-scroll-body {
   height: min(86vh, 760px);
@@ -113,6 +128,54 @@
   min-height: 0;
   overflow: hidden;
 }
+/*
+ * モバイル（縦向きのスマートフォン）: 重ねる画面は全画面にする。上端に題と閉じる、下端に操作。
+ * 確認・入力の小さなダイアログだけは下から出す（全画面にすると2行の確認で画面が空く）
+ */
+@media (max-width: 767px) {
+  .overlay {
+    padding: 0;
+    place-items: stretch;
+  }
+  .modal,
+  .modal.modal-wide,
+  .modal.modal-scroll-body {
+    max-width: none;
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+  }
+  .modal .modal-head {
+    padding: 4px 6px 4px 18px;
+  }
+  .modal .modal-body {
+    flex: 1;
+    padding: 16px 18px;
+  }
+  .modal:not(.modal-scroll-body) .modal-body {
+    min-height: 0;
+  }
+  .modal .modal-foot {
+    padding: 12px 18px 22px;
+  }
+  .modal .modal-foot .btn {
+    min-height: var(--tap);
+  }
+  .overlay:has(> .modal.modal-dialog) {
+    place-items: end stretch;
+  }
+  .modal.modal-dialog {
+    height: auto;
+    max-height: 86vh;
+    border-top: 1px solid var(--line);
+    border-radius: var(--r-panel) var(--r-panel) 0 0;
+  }
+}
 
 /* ---------- 汎用ポップオーバー（⋯メニュー・アクティビティ内訳。UI-2） ---------- */
 .menu-pop {
@@ -120,9 +183,9 @@
   top: calc(100% + 6px);
   right: 0;
   min-width: 230px;
-  background: var(--bg-elev2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  background: var(--tint);
+  border: 1px solid var(--line);
+  border-radius: var(--r-input);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
   padding: 6px;
   z-index: var(--z-dock);
@@ -141,14 +204,14 @@
   width: 100%;
   background: transparent;
   border: none;
-  color: var(--text);
+  color: var(--ink);
   padding: 8px 10px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-input);
   font-size: 13px;
   text-align: left;
 }
 .menu-item:hover:not(:disabled) {
-  background: var(--bg-elev);
+  background: var(--tint);
 }
 .menu-item:disabled {
   opacity: 0.4;
@@ -157,86 +220,10 @@
 .menu-item.danger {
   color: var(--danger);
 }
-.menu-item .menu-check {
-  margin-left: auto;
-  opacity: 0;
-}
-.menu-item.checked .menu-check {
-  opacity: 1;
-}
 .menu-sep {
   height: 1px;
-  background: var(--border);
+  background: var(--line);
   margin: 4px 2px;
-}
-
-/* ---------- リーダー設定（Aa ポップオーバー。UI-4・F2で数値化） ---------- */
-.reader-settings {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 4px 6px;
-  width: 300px;
-}
-.rs-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.rs-field-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-.rs-label {
-  font-size: 12px;
-  color: var(--text-dim);
-  flex-shrink: 0;
-}
-/* 数値の単位表示（%等。FB8-E4） */
-.rs-unit {
-  color: var(--text-dim);
-  font-size: 12px;
-  flex-shrink: 0;
-}
-.rs-num {
-  width: 68px;
-  flex-shrink: 0;
-  background: var(--bg-elev);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text);
-  padding: 4px 8px;
-  font-size: 13px;
-  text-align: right;
-  outline: none;
-  font-variant-numeric: tabular-nums;
-}
-.rs-num:focus {
-  border-color: var(--accent);
-}
-.rs-field input[type='range'] {
-  width: 100%;
-  min-width: 0;
-  accent-color: var(--accent);
-}
-.rs-chk {
-  justify-content: flex-start;
-  padding: 2px 4px;
-}
-.rs-reset {
-  align-self: flex-start;
-  padding: 2px 4px;
-}
-/* スクリーンリーダー専用（数値の読み上げ用・視覚的には隠す） */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
 }
 
 .field {
@@ -250,17 +237,17 @@
 }
 .field .desc {
   font-size: 12px;
-  color: var(--text-faint);
+  color: var(--sub);
   margin-bottom: 6px;
 }
 .field input,
 .field textarea,
 .field select {
   width: 100%;
-  background: var(--bg-elev2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-input);
+  color: var(--ink);
   padding: 10px 12px;
   outline: none;
 }
@@ -280,98 +267,6 @@
   line-height: 1.6;
 }
 
-/* ---------- 配役（CA2） ---------- */
-.casting-fields {
-  margin: 14px 0;
-  padding: 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--bg-elev2) 66%, transparent);
-}
-.casting-fields-head > label {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-.casting-fields-head .desc {
-  margin-top: 0;
-}
-.casting-role {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(140px, 0.7fr);
-  gap: 10px;
-  align-items: center;
-  padding: 9px 0;
-  border-top: 1px solid var(--border);
-}
-.casting-role-copy {
-  min-width: 0;
-}
-.casting-role-copy strong {
-  margin-right: 6px;
-}
-.casting-role-copy p {
-  margin: 4px 0 0;
-  color: var(--text-faint);
-  font-size: 12px;
-  line-height: 1.45;
-}
-.casting-role select {
-  width: 100%;
-}
-.casting-role-members {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-  align-items: center;
-}
-.casting-role-members .chk {
-  white-space: nowrap;
-}
-.casting-role.unresolved,
-.casting-persona.unresolved {
-  color: var(--danger);
-}
-.casting-persona,
-.casting-warning {
-  margin: 8px 0 0;
-  font-size: 12px;
-}
-.casting-warning {
-  color: var(--warning, #e9b44c);
-}
-.casting-persona-pick {
-  margin: 10px 0;
-}
-.casting-persona-pick > label {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-.casting-persona-pick select {
-  width: 100%;
-}
-.casting-preview {
-  margin-top: 10px;
-  font-size: 12px;
-}
-.casting-preview summary {
-  cursor: pointer;
-  color: var(--text-dim);
-}
-.casting-preview pre {
-  margin: 7px 0 0;
-  padding: 8px;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  border-radius: var(--radius-sm);
-  background: var(--bg);
-  color: var(--text-dim);
-  font-family: inherit;
-}
-
 .row2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -388,39 +283,46 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 9px 18px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: var(--bg-elev2);
-  color: var(--text);
-  font-size: 14px;
+  min-height: 40px;
+  box-sizing: border-box;
+  padding: 8px 18px;
+  border-radius: var(--r-input);
+  border: 1px solid var(--edge);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: var(--fs-14);
 }
-.btn:hover {
-  border-color: var(--accent);
+.btn:hover:not(:disabled) {
+  background: var(--tint);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 .btn.primary {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--on-accent);
 }
-.btn.primary:hover {
-  background: var(--accent-hover);
+.btn.primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 85%, var(--ink));
 }
 .btn.danger {
   color: var(--danger);
   border-color: transparent;
 }
-.btn.danger:hover {
+.btn.danger:hover:not(:disabled) {
   border-color: var(--danger);
+  background: transparent;
 }
 
 /* ---------- モデルピッカー ---------- */
 .model-search {
   width: 100%;
-  background: var(--bg-elev2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text);
+  background: var(--tint);
+  border: 1px solid var(--edge);
+  border-radius: var(--r-input);
+  color: var(--ink);
   padding: 10px 12px;
   outline: none;
   margin-bottom: 12px;
@@ -437,15 +339,15 @@
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-input);
   cursor: pointer;
   border: 1px solid transparent;
 }
 .model-row:hover {
-  background: var(--bg-elev2);
+  background: var(--tint);
 }
 .model-row.selected {
-  background: var(--accent-soft);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
   border-color: var(--accent);
 }
 .model-row .m-name {
@@ -460,20 +362,20 @@
 }
 .model-row .m-name .id {
   font-size: 11px;
-  color: var(--text-faint);
+  color: var(--sub);
 }
 .model-row .star {
   background: transparent;
   border: none;
   font-size: 16px;
-  color: var(--text-faint);
+  color: var(--sub);
 }
 .model-row .star.on {
   color: var(--star);
 }
 .m-ctx {
   font-size: 11px;
-  color: var(--text-dim);
+  color: var(--sub);
   white-space: nowrap;
 }
 
@@ -494,7 +396,7 @@
   background: var(--danger);
   color: var(--bg);
   padding: 12px 18px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-input);
   max-width: 90%;
   display: flex;
   align-items: center;
@@ -502,9 +404,9 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
 .toast button {
-  background: rgba(255, 255, 255, 0.2);
+  background: color-mix(in srgb, currentColor 20%, transparent);
   border: none;
-  color: var(--bg);
+  color: inherit;
   border-radius: 6px;
   padding: 2px 8px;
 }
@@ -513,37 +415,19 @@
   vertical-align: -2px;
   margin-right: 6px;
 }
-
-/* ラベル・状態行の SVG アイコン（FB8-E2。🏆✅🔒🏁 等の置き換え） */
-.label-icon {
-  vertical-align: -2px;
-  color: var(--text-dim);
-}
-.state-icon {
-  vertical-align: -1.5px;
-  color: var(--text-faint);
-}
-.state-icon.ok {
-  color: var(--ok);
-}
-.state-icon.accent {
-  color: var(--accent);
-}
-.toast.achievement {
-  background: linear-gradient(135deg, #e0b341, #d77ad8);
-}
 .toast.image {
-  background: linear-gradient(135deg, #5b8def, #4cc9a4);
+  background: var(--accent);
+  color: var(--on-accent);
 }
 /* 案内トースト（没入モード起動時など。控えめな面色。F2） */
 .toast.info {
-  background: var(--bg-elev2);
-  border: 1px solid var(--border);
-  color: var(--text);
+  background: var(--tint);
+  border: 1px solid var(--line);
+  color: var(--ink);
 }
 .toast.info button {
-  background: var(--bg-elev);
-  color: var(--text-dim);
+  background: var(--tint);
+  color: var(--sub);
 }
 
 /* ---------- 画像生成ジョブ（候補グリッド） ---------- */
@@ -564,15 +448,15 @@
   width: 160px;
   height: 160px;
   object-fit: cover;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
+  border-radius: var(--r-input);
+  border: 1px solid var(--line);
   cursor: zoom-in;
 }
 
 .seg {
   display: inline-flex;
-  background: var(--bg-elev2);
-  border: 1px solid var(--border);
+  background: var(--tint);
+  border: 1px solid var(--line);
   border-radius: 999px;
   padding: 3px;
   gap: 3px;
@@ -583,7 +467,7 @@
   gap: 4px;
   background: transparent;
   border: none;
-  color: var(--text-dim);
+  color: var(--sub);
   padding: 5px 14px;
   border-radius: 999px;
   font-size: 13px;
@@ -605,7 +489,7 @@
 }
 .range-row .val {
   font-variant-numeric: tabular-nums;
-  color: var(--text-dim);
+  color: var(--sub);
   width: 44px;
   text-align: right;
 }
@@ -646,7 +530,7 @@
   border: 2px solid transparent;
 }
 .color-dot.on {
-  border-color: var(--text);
+  border-color: var(--ink);
 }
 
 /* ---------- セッション設定: キャラ選択 ---------- */
@@ -661,9 +545,9 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  background: var(--bg-elev2);
-  border: 1px solid var(--border);
-  color: var(--text);
+  background: var(--tint);
+  border: 1px solid var(--line);
+  color: var(--ink);
   padding: 7px 12px;
   border-radius: 999px;
   font-size: 13px;
@@ -672,7 +556,7 @@
   border-color: var(--accent);
 }
 .pick-chip.on {
-  background: var(--accent-soft);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
   border-color: var(--accent);
 }
 .dot-avatar {
@@ -687,7 +571,7 @@
 }
 .inline-empty {
   font-size: 13px;
-  color: var(--text-dim);
+  color: var(--sub);
 }
 .link {
   background: none;
@@ -712,20 +596,20 @@
 .help-details > summary {
   cursor: pointer;
   font-size: 12px;
-  color: var(--text-dim);
+  color: var(--sub);
   user-select: none;
   width: fit-content;
 }
 .help-details > summary:hover {
-  color: var(--text);
+  color: var(--ink);
 }
 .help-details-body {
   margin-top: 6px;
   padding: 8px 10px;
-  border-left: 2px solid var(--border);
+  border-left: 2px solid var(--line);
   font-size: 12px;
   line-height: 1.8;
-  color: var(--text-dim);
+  color: var(--sub);
 }
 .help-details-body p {
   margin: 0 0 6px;
@@ -741,11 +625,11 @@
   font-weight: 600;
 }
 .lore-entry {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  border-radius: var(--r-input);
   padding: 10px;
   margin-bottom: 10px;
-  background: var(--bg-elev2);
+  background: var(--tint);
 }
 .lore-entry.disabled {
   opacity: 0.55;
@@ -756,13 +640,6 @@
   gap: 8px;
   margin-bottom: 8px;
 }
-/* 条件行の助詞・接続テキスト（FB8-E3。「〜が 2 以上」と文で読ませる） */
-.clause-joint {
-  color: var(--text-dim);
-  font-size: 12px;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
 
 .lore-keys {
   flex: 1;
@@ -771,9 +648,9 @@
 .lore-content {
   width: 100%;
   background: var(--bg) !important;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: var(--r-input);
+  color: var(--ink);
   padding: 8px 10px;
   resize: vertical;
   outline: none;
@@ -783,7 +660,7 @@
   align-items: center;
   gap: 4px;
   font-size: 12px;
-  color: var(--text-dim);
+  color: var(--sub);
   white-space: nowrap;
 }
 .icon-btn.small {
@@ -810,67 +687,13 @@
 }
 .disc-count {
   font-size: 10px;
-  background: var(--bg-elev);
-  border: 1px solid var(--border);
+  background: var(--tint);
+  border: 1px solid var(--line);
   border-radius: 999px;
   padding: 0 5px;
   margin-left: 2px;
-  color: var(--text-faint);
+  color: var(--sub);
   font-variant-numeric: tabular-nums;
-}
-
-/* ---------- レビューモーダル ---------- */
-.review-cards {
-  display: grid;
-  gap: 10px;
-}
-.review-card {
-  text-align: left;
-  background: var(--bg-elev2);
-  border: 1px solid var(--border);
-  color: var(--text);
-  border-radius: var(--radius-sm);
-  padding: 12px 14px;
-}
-.review-card:hover {
-  border-color: var(--accent);
-}
-.review-card.on {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-.review-card-title {
-  font-weight: 600;
-  margin-bottom: 3px;
-}
-.review-card-note {
-  font-size: 12.5px;
-  color: var(--text-dim);
-}
-
-.director-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-.director-row select {
-  flex: 1;
-}
-.event-badge {
-  flex: 1;
-  /* インラインのままだと上下 padding・枠線が行ボックスに算入されず前の行に被る */
-  display: inline-block;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--warn);
-  background: color-mix(in srgb, var(--warn) 14%, transparent);
-  border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent);
-  border-radius: var(--radius-sm);
-  padding: 9px 12px;
-}
-/* 「⏰ 時間帯が進む」バッジの行（説明文とは別行に置く） */
-.review-next-time {
-  margin: 0 0 8px;
 }
 
 .growth-list {
@@ -878,44 +701,16 @@
   flex-direction: column;
   gap: 8px;
 }
-.growth-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  font-size: 13.5px;
-  background: var(--bg-elev2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 9px 12px;
-  cursor: pointer;
-}
-.growth-item input {
-  margin-top: 3px;
-  width: auto;
-  flex-shrink: 0;
-}
-.growth-keys {
-  color: var(--accent);
-  font-size: 12px;
-}
 .rel-aspect {
   display: block;
   font-size: 12px;
-  color: var(--text-faint);
+  color: var(--sub);
   margin-top: 2px;
 }
 .rel-aspect em {
   color: var(--accent);
   font-style: normal;
   margin-right: 4px;
-}
-.delta-up {
-  color: var(--ok);
-  font-weight: 700;
-}
-.delta-down {
-  color: var(--bad);
-  font-weight: 700;
 }
 .growth-edit {
   display: flex;
@@ -938,7 +733,7 @@
   font-size: 10px;
   font-weight: 700;
   color: var(--accent);
-  background: var(--accent-soft);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
   border-radius: 999px;
   padding: 2px 8px;
   white-space: nowrap;
@@ -956,32 +751,6 @@
   white-space: nowrap;
   flex-shrink: 0;
 }
-
-/* ---------- レビュー編集モード（FB5-C） ---------- */
-.review-title-row {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-}
-.review-edit-toggle {
-  font-size: 12px;
-  padding: 4px 10px;
-}
-.review-edit-toggle.on {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-/* 閲覧モードのあらすじ（読み取り専用表示） */
-.review-static-text {
-  white-space: pre-wrap;
-  font-size: 13.5px;
-  line-height: 1.6;
-  color: var(--text);
-  background: var(--bg-elev2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
-}
 /* ---------- レビュー生成中の進行表示（PC-A A-1） ---------- */
 /* 呼び出し1本＝1行。2本が同時に「生成中」で文字数を伸ばすことが並列実行の可視的な証拠になる */
 .review-calls {
@@ -995,16 +764,16 @@
   gap: 8px;
   padding: 7px 10px;
   font-size: 12.5px;
-  color: var(--text-dim);
-  background: var(--bg-elev2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  color: var(--sub);
+  background: var(--tint);
+  border: 1px solid var(--line);
+  border-radius: var(--r-input);
 }
 .review-call-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--border);
+  background: var(--line);
   flex-shrink: 0;
 }
 .review-call-label {
@@ -1018,10 +787,10 @@
 .review-call-note {
   display: block;
   font-size: 11.5px;
-  color: var(--text-faint);
+  color: var(--sub);
 }
 .review-call.waiting .review-call-dot {
-  background: var(--text-dim);
+  background: var(--sub);
   animation: blink 1.4s steps(2) infinite;
 }
 .review-call.streaming {
@@ -1043,10 +812,6 @@
 .review-call.failed .review-call-dot {
   background: var(--danger);
 }
-/* ストリーミング中のあらすじ（末尾にキャレットを出して生成中であることを示す） */
-.review-streaming {
-  min-height: 6em;
-}
 .review-caret {
   display: inline-block;
   width: 7px;
@@ -1056,67 +821,10 @@
   background: var(--accent);
   animation: blink 1s steps(2) infinite;
 }
-
-/* 編集モードの候補カード（input を含むため button でなく div。クリックで選択は維持） */
-.review-card-edit {
-  cursor: pointer;
-}
-.review-card-edit .review-card-title {
-  margin-bottom: 0;
-}
-.review-card-edit input,
-.review-card-edit textarea {
-  margin-top: 6px;
-}
-/* 編集モードの一覧行（チェックボックス非表示・縦積み） */
-.growth-item.editing {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 6px;
-  cursor: default;
-}
-/* .growth-item input（チェックボックス用 width:auto）を打ち消してテキスト入力を全幅に */
-.growth-item.editing input {
-  width: 100%;
-  margin-top: 0;
-  flex-shrink: 1;
-}
-.growth-item.editing strong {
-  font-size: 13px;
-}
-.growth-edit-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-.growth-item.editing input.num {
-  width: 90px;
-  flex-shrink: 0;
-  margin-top: 0;
-}
 .rel-aspect-edit {
   display: flex;
   flex-direction: column;
   gap: 4px;
-}
-
-/* ---------- タイムライン設定 ---------- */
-.timeline-box {
-  min-width: 0;
-  margin-top: 10px;
-  padding: 14px;
-  background: var(--bg-elev2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-}
-.timeline-box:disabled {
-  opacity: 0.5;
-}
-.timeline-preview {
-  margin-top: 4px;
-  font-weight: 600;
-  color: var(--text-muted);
 }
 .sub-field {
   margin-bottom: 12px;
@@ -1127,7 +835,7 @@
 .sub-label {
   display: block;
   font-size: 12px;
-  color: var(--text-dim);
+  color: var(--sub);
   margin-bottom: 5px;
 }
 
@@ -1138,10 +846,10 @@
   gap: 12px;
 }
 .log-item {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  border-radius: var(--r-input);
   padding: 12px 14px;
-  background: var(--bg-elev);
+  background: var(--tint);
 }
 .log-head {
   display: flex;
@@ -1154,7 +862,7 @@
   font-size: 11px;
   font-weight: 700;
   color: var(--accent);
-  background: var(--accent-soft);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
   padding: 1px 8px;
   border-radius: 999px;
 }
@@ -1164,24 +872,24 @@
 }
 .log-summary {
   font-size: 13.5px;
-  color: var(--text-dim);
+  color: var(--sub);
   white-space: pre-wrap;
 }
 .log-summary.empty {
   font-style: italic;
-  color: var(--text-faint);
+  color: var(--sub);
 }
 
 /* ---------- 分岐ツリー（C2→F1→FB3-B2 で SourceTree 風コミットグラフに再設計） ---------- */
 .branch-time {
   font-size: 11px;
-  color: var(--text-faint);
+  color: var(--sub);
 }
 /* 現在地バッジ用のアクセント色バリアント */
 .badge.accent {
   color: var(--accent);
   border-color: color-mix(in srgb, var(--accent) 45%, transparent);
-  background: var(--accent-soft);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
 }
 .bg-current-badge {
   flex: 0 0 auto;
@@ -1203,21 +911,21 @@
 }
 .bg-fold-count {
   flex-shrink: 0;
-  color: var(--text-dim);
+  color: var(--sub);
   font-size: 12px;
 }
 /* ノードラベル先頭の種別アイコン（📖/🏁 絵文字の置き換え。FB8-E2） */
 .bg-label-icon {
   vertical-align: -1.5px;
   margin-right: 4px;
-  color: var(--text-dim);
+  color: var(--sub);
 }
 .badge svg,
 .star-row-name svg {
   vertical-align: -1.5px;
 }
 .star-thumb-placeholder svg {
-  color: var(--text-faint);
+  color: var(--sub);
 }
 
 /* 明示分岐の名前チップ（FB6-C。しおりと同じ収まり方・アクセント系の枠色） */
@@ -1240,13 +948,13 @@
   display: flex;
   align-items: stretch;
   height: var(--bg-row-h, 36px);
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-input);
 }
 .bg-row.current {
-  background: var(--accent-soft);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
 }
 .bg-row:hover:not(.current) {
-  background: var(--bg-elev2);
+  background: var(--tint);
 }
 /* グラフのセル（レーン縦線・分岐カーブ・ドットを SVG で描く） */
 .bg-graph {
@@ -1280,7 +988,7 @@
 .bg-bytes {
   margin-left: auto;
   font-size: 10.5px;
-  color: var(--text-faint);
+  color: var(--sub);
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;
 }
@@ -1302,9 +1010,9 @@
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--line);
   border-radius: 999px;
-  color: var(--text-dim);
+  color: var(--sub);
   font-size: 11.5px;
   padding: 2px 8px;
   opacity: 0;
@@ -1315,12 +1023,12 @@
 }
 .bg-body:hover .bg-open {
   border-color: var(--accent);
-  color: var(--text);
+  color: var(--ink);
 }
 
 /* ---------- しおり（C3） ---------- */
 .star-thumb {
-  border-radius: var(--radius-sm);
+  border-radius: var(--r-input);
   object-fit: cover;
   flex-shrink: 0;
 }
@@ -1328,9 +1036,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-elev2);
-  border: 1px solid var(--border);
-  color: var(--text-faint);
+  background: var(--tint);
+  border: 1px solid var(--line);
+  color: var(--sub);
   font-size: 14px;
 }
 .star-list {
@@ -1343,8 +1051,8 @@
   align-items: center;
   gap: 10px;
   padding: 8px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  border-radius: var(--r-input);
 }
 .star-row-info {
   flex: 1;
@@ -1480,21 +1188,21 @@
   padding: 9px 12px;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  color: var(--text-dim);
+  border-radius: var(--r-input);
+  color: var(--sub);
   font-size: 13.5px;
   text-align: left;
   cursor: pointer;
   transition: 0.12s;
 }
 .se-nav-btn:hover {
-  background: var(--bg-elev2);
-  color: var(--text);
+  background: var(--tint);
+  color: var(--ink);
 }
 .se-nav-btn.on {
-  background: var(--accent-soft);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
   border-color: var(--accent);
-  color: var(--text);
+  color: var(--ink);
   font-weight: 600;
 }
 .se-panel {
@@ -1505,10 +1213,10 @@
   min-height: 0;
   overflow-y: auto;
   padding: 2px 10px 2px 18px;
-  border-left: 1px solid var(--border);
+  border-left: 1px solid var(--line);
   scrollbar-gutter: stable;
 }
-@media (max-width: 560px) {
+@media (max-width: 767px) {
   .se-navlayout {
     flex-direction: column;
   }
@@ -1519,7 +1227,7 @@
   }
   .session-editor-body .se-panel {
     padding: 14px 2px 2px;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--line);
     border-left: 0;
   }
 }
@@ -1535,7 +1243,7 @@
 .usage-table td {
   text-align: right;
   padding: 4px 6px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--line);
   white-space: nowrap;
 }
 .usage-table th:first-child,
@@ -1543,12 +1251,12 @@
   text-align: left;
 }
 .usage-table th {
-  color: var(--text-faint);
+  color: var(--sub);
   font-weight: 500;
 }
 .usage-table tfoot td {
   font-weight: 600;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--line);
   border-bottom: none;
 }
 
@@ -1556,9 +1264,9 @@
 .ending-proposal,
 .ending-goal {
   padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--bg-elev2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-input);
+  background: var(--tint);
 }
 .ending-goal strong {
   display: block;
@@ -1568,24 +1276,4 @@
   display: flex;
   gap: 8px;
   margin-top: 8px;
-}
-
-/* 進み具合の小さな表示（章を閉じるの次の章の候補を考え中。旧 composer.css から移した） */
-.choices-loading {
-  font-size: 12px;
-  color: var(--accent);
-  margin-bottom: 10px;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-.choices-loading::before {
-  content: '';
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--accent);
-  animation: blink 1s steps(2) infinite;
 }

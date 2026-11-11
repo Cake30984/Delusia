@@ -258,7 +258,7 @@ export default function CharacterEditor({ character, onClose, draft, draftNotice
         </>
       }
     >
-      <p style={{ fontSize: 12, color: 'var(--text-faint)', marginTop: 0, marginBottom: 10 }}>{notice}</p>
+      <p style={{ fontSize: 12, color: 'var(--sub)', marginTop: 0, marginBottom: 10 }}>{notice}</p>
       {fields}
     </ModalShell>
   )

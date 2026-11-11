@@ -59,10 +59,9 @@
   --on-accent: var(--l-on-accent);
   --danger: var(--l-danger);
 
-  /* 旧画面の意味色（明るい背景向けに濃くした値。段9で見直す） */
-  --ok: #1E7A57;
+  /* 意味の色（うまくいった・注意・星・物語とロールプレイの印・分岐の線）。明るい背景向けに濃くした値。文字に使う色はどの色の組の背景・帯の上でも 4.5:1 以上（星は印だけなので 3:1 以上） */
+  --ok: #1A6E4E;
   --warn: #8A5A00;
-  --bad: #B23A36;
   --star: #A86B00;
   --badge-rp: #A4501A;
   --badge-story: #0F6E86;
@@ -89,7 +88,6 @@
 
   --ok: #4cc9a4;
   --warn: #e0b341;
-  --bad: #ef6f6c;
   --star: #f5c518;
   --badge-rp: #f0a76b;
   --badge-story: #6bd6f0;
@@ -115,7 +113,6 @@
 
     --ok: #4cc9a4;
     --warn: #e0b341;
-    --bad: #ef6f6c;
     --star: #f5c518;
     --badge-rp: #f0a76b;
     --badge-story: #6bd6f0;
@@ -192,24 +189,7 @@
   --speaker-icon-size: 22px;
 }
 
-/*
- * ---------- 旧画面のための対応表（一時。P9 段9で消す） ----------
- * 旧 CSS の変数名を新しい色へ当てる。新しく書く CSS ではここの名前を使わない
- */
+/* 小説のセリフの色（表示の「セリフに色をつける」を切ると App.tsx が本文色で上書きする） */
 :root {
-  --bg-rail: color-mix(in srgb, var(--ink) 5%, var(--bg));
-  --bg-elev: var(--tint);
-  --bg-elev2: color-mix(in srgb, var(--ink) 7%, var(--bg));
-  --border: var(--line);
-  --text: var(--ink);
-  --text-dim: var(--sub);
-  --text-faint: var(--sub);
-  --accent-hover: color-mix(in srgb, var(--accent) 85%, var(--ink));
-  --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
-  --user: var(--accent);
-  --graph-lane-0: var(--accent);
-  /* 小説のセリフの色（設定で色分けを切ると App.tsx が本文色で上書きする） */
   --dialogue: color-mix(in srgb, var(--accent) 40%, var(--ink));
-  --radius: 12px;
-  --radius-sm: 8px;
 }
