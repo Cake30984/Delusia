@@ -175,7 +175,9 @@ export default function WorldEditor({ world, onClose, inline, onBack, onDirty }:
               </div>
               <div className="field">
                 <label>概要（常時注入）</label>
-                <div className="desc">世界の基本設定。会話に常に添付されます。簡潔に。</div>
+                <div className="desc">
+                  世界の基本設定（舞台・時代・空気・世界の仕組み）。会話に常に添付されます。必ず活かしたい設定は、ここでその語を使い、詳しい説明はロア項目に書くのが推奨です。
+                </div>
                 <textarea
                   rows={3}
                   value={d.description}
@@ -223,7 +225,7 @@ export default function WorldEditor({ world, onClose, inline, onBack, onDirty }:
               <div className="field">
                 <label>あらすじ・前提</label>
                 <div className="desc">
-                  物語が始まる時点の状況と経緯。最初の場面の前に、読者には見えない前置きとして置かれ、話が進むと要約へ引き継がれます。ずっと効かせたい設定は世界観の「基本」へ、絶対に守らせたい指示は固定メモへ。
+                  物語が始まる時点の状況と経緯。最初の章の前に、読者には見えない前置きとして置かれ、話が進むと要約へ引き継がれます。ずっと効かせたい設定は世界観の「基本」へ、絶対に守らせたい指示は固定メモへ。
                 </div>
                 <textarea
                   rows={3}
@@ -385,7 +387,8 @@ export default function WorldEditor({ world, onClose, inline, onBack, onDirty }:
           <div className="lore-head">
             <label>ロア項目</label>
             <div className="desc">
-              キーワードが会話に登場した時だけ注入されます（トークン節約）。「常時」をオンにすると常に注入。
+              物語を通して変わらない事実を、1件に1つずつ。時間とともに変わる状態や出来事は、あらすじ・前提や導入へ。
+              キーワードが本文に出たときだけ注入されます。「常時」は毎回注入されるので、どうしても外せない設定にだけ使ってください。
             </div>
           </div>
 

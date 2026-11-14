@@ -297,7 +297,7 @@ export default function SessionEditor({ session, notice, onClose }: Props) {
                   <div className="field">
                     <label>あらすじ・前提</label>
                     <div className="desc">
-                      物語が始まる時点の状況と経緯。最初の場面の前に、読者には見えない前置きとして置かれ、話が進むと要約へ引き継がれます。ずっと効かせたい設定は世界観素材へ、絶対に守らせたい指示は固定メモへ。
+                      物語が始まる時点の状況と経緯。最初の章の前に、読者には見えない前置きとして置かれ、話が進むと要約へ引き継がれます。ずっと効かせたい設定は世界観素材へ、絶対に守らせたい指示は固定メモへ。
                     </div>
                     <textarea
                       rows={3}
