@@ -223,7 +223,7 @@ export default function WorldEditor({ world, onClose, inline, onBack, onDirty }:
               <div className="field">
                 <label>あらすじ・前提</label>
                 <div className="desc">
-                  この物語で何が起きるかの前提。世界そのものの説明は世界観の「基本」へ、絶対に守らせたい指示は固定メモへ。
+                  物語が始まる時点の状況と経緯。最初の場面の前に、読者には見えない前置きとして置かれ、話が進むと要約へ引き継がれます。ずっと効かせたい設定は世界観の「基本」へ、絶対に守らせたい指示は固定メモへ。
                 </div>
                 <textarea
                   rows={3}

@@ -110,11 +110,12 @@ React 18 + TypeScript(strict) + Vite / zustand（`persist`）/ Tauri 2（`plugin
 
 | 層 | 変わる頻度 | 中身 |
 |---|---|---|
-| system（`buildSystemPrompt`） | **シーン境界でのみ** | 世界観概要＋常時ロア／これまでのあらすじ／【現在の場面】＝`scene.note`／【時間】＝`state.now`／【状態】＝関係性 prose・気分／登場人物定義（中心人物ラベル付き）／新しい登場人物の方針／【中心人物】／【目指す結末】／物語設定（ジャンル・前提・最初のシーンだけ初期方向付け）／文体ルール（Web 小説の素の形＝セリフは「」・行頭に話者ラベルを付けない） |
+| system（`buildSystemPrompt`） | **シーン境界でのみ** | 世界観概要＋常時ロア／これまでのあらすじ／【現在の場面】＝`scene.note`／【時間】＝`state.now`／【状態】＝関係性 prose・気分／登場人物定義（中心人物ラベル付き）／新しい登場人物の方針／【中心人物】／【目指す結末】／物語設定（ジャンル・最初のシーンだけ初期方向付け）／文体ルール（Web 小説の素の形＝セリフは「」・行頭に話者ラベルを付けない） |
 | 深さ3（履歴末尾から3件手前。足りなければ system 直後） | 毎ターン | 【今回の場面に関わる設定】＝キーワード一致ロア／【常に踏まえる重要事項】＝`authorNote`＋`CONSEQUENCE_CLAUSE` |
 | 深さ0（末尾） | 毎ターン | 【今回の応答】話者指定（会話劇）／【いまの状況】＝`scene.foreground`／【シーンの収束】/【締め】ナッジ（文字数閾値超過時）／形式の短い再掲 |
 
 - 履歴に載せるシーン範囲は `session.rawWindowFromSceneId`（`selectRawScenes`・`beginScene` だけが決める。**シーン途中で動かさない・古い方へ戻さない**）。窓の1つ手前のシーンは末尾だけ「橋」として足す
+- **発端（`story.premise`）は system に置かない。** 最初のシーンが窓に入っている間だけ、system の直後に `premiseLeadText` の固定枠の user 1通として送る（保存しない）。窓から外れたら導入文と一緒に消え、最初のシーンのレビューにだけ渡して要約へ溶け込ませる（`決定記録.md` §15）
 - `kind:'directive'` の入力は `DIRECTIVE_HEADER` の固定枠で user として送る。裏方の文脈・書き出しからは落とす
 - `withCacheControl` は Anthropic 系にだけ system 末尾と深さ3の手前にマーカーを付ける
 
@@ -150,7 +151,7 @@ React 18 + TypeScript(strict) + Vite / zustand（`persist`）/ Tauri 2（`plugin
 - **書き出し**: `StoryExportModal`（plain/markdown/挿絵つき/共有カード画像・分岐時点指定可）。キャラ・世界・カセットは PNG カード、全データは JSON バンドル（画像同梱可）。取り込みは `importAnyFile` に一本化
 - **初回**: `FirstRunWizard`（OpenRouter で始める=おすすめ・開いた時点で選択済み・OAuth または鍵貼り付け・**モデルは選ばせず `RECOMMENDED_MODELS[0]`（`deepseek/deepseek-v4-flash`）で始め、「モデル: 名前［変更する］」と「あとから変更できます」の一文だけ出す。失敗時は「変更する」から選び直し（自動フォールバックしない）**／ほかの接続先を使う=ローカル LLM と OpenAI 互換の API。Base URL・キー（ローカル宛は不要）・モデル名。無料枠の Gemini は出さない。`決定記録.md` §10 の 2026-11-14 の見直し）→ 接続テスト → `defaultModelRef` 設定 → 最後に「サンプルの物語を開く」（`openStarterStory`。「完了」と同義で行き先が1つ増えるだけ）。閉じても `Provider` 未設定なら生成時に案内。**ブラウザ版はウィザードを閉じたあと1回だけ** `WebStorageNotice`（保存先・消える条件・書き出し。`storageNoticeSeen`）
 - **ブラウザ承認（OAuth）**: Tauri はその場で鍵が返る。**Web はページごと OpenRouter へ移動し、`?code=` 付きで戻ってくる**——App が起動時に `pendingOAuthRedirect` を見て交換し、接続先へ鍵を入れてからウィザードを開き直す（開いた画面が `settings` なら通知だけ）。**接続先の判定より先に**この処理を通す（先にウィザードが開くと、承認したのに手入力の画面へ着地する）
-- **一行から始める**: `kickoffStory(premise, signal)` が既定モデルへ**1呼び出し**（`KICKOFF_SCHEMA`）→ `normalizeKickoff` で `World`1・`Character`2〜4人（先頭が中心人物・タグ「起案」）→ `startPresetPatch` でセッションへ流し込んで開く。**生成は始めない**——`nav.startKickoff` が起案を走らせ（画面を離れても続く。止めるのは `stopKickoff`）、終わると App が `SessionEditor` を案内つきで開き、人が直して「保存」してから始める。起案できなくても空のセッションは作る（理由は設定画面の冒頭に出す）。中止されたときだけ何も作らない
+- **一行から始める**: `kickoffStory(premise, signal)` が既定モデルへ**1呼び出し**（`KICKOFF_SCHEMA`）→ `normalizeKickoff` で `World`1・`Character`3〜5人（受け側は1〜5人で許容。先頭が中心人物・タグ「起案」。ロアは**キーワード発火だけ**＝`alwaysOn` は常に false・keys の無い項目は捨てる。`決定記録.md` §14）→ `startPresetPatch` でセッションへ流し込んで開く。**生成は始めない**——`nav.startKickoff` が起案を走らせ（画面を離れても続く。止めるのは `stopKickoff`）、終わると App が `SessionEditor` を案内つきで開き、人が直して「保存」してから始める。起案できなくても空のセッションは作る（理由は設定画面の冒頭に出す）。中止されたときだけ何も作らない
 - **既定コンテンツ**: 素材が空の初回起動で `seedStarterContent` が `src/starter/` をライブラリへ入れ、開始状態のセッションを1本作って開く。**自動投入は1回きり**（`starterSeeded`）＝消した人へ勝手に戻さない。入れ直しは Library の「サンプルを追加し直す」（素材は固定 id へ上書き＝増えない・セッションだけ1本増える）。Play の空状態は素材が無ければサンプルへ、あれば `SessionEditor` へ送る（物語の導線は1本）
 - **起動時**: hydration 後に `hydrateProviderSecrets`・`cleanupOrphanCheckpoints`・`backfillImageLogs`・`seedStarterContent`（初回のみ）
 

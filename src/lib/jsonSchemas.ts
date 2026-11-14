@@ -45,7 +45,6 @@ function obj(properties: Record<string, unknown>): Record<string, unknown> {
 }
 
 const str = { type: 'string' } as const
-const bool = { type: 'boolean' } as const
 const arrayOf = (items: unknown) => ({ type: 'array', items })
 
 /** レビュー A（何が起きたか）の項目 */
@@ -176,7 +175,8 @@ export const KICKOFF_SCHEMA: JsonSchemaSpec = {
       name: str,
       description: str,
       calendarFormat: str,
-      entries: arrayOf(obj({ keys: arrayOf(str), content: str, alwaysOn: bool })),
+      // alwaysOn は聞かない（起案のロアはキーワード発火だけ。決定記録 §14）
+      entries: arrayOf(obj({ keys: arrayOf(str), content: str })),
       relationAspects: arrayOf(obj({ name: str, guidance: str })),
       startPreset: obj({
         genre: str,

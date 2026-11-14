@@ -16,7 +16,7 @@ const MAX_ENTRIES = 5
 const MAX_ASPECTS = 2
 /** 起案する登場人物（先頭が中心人物） */
 const MIN_CHARACTERS = 1
-const MAX_CHARACTERS = 4
+const MAX_CHARACTERS = 5
 
 /** 話者名の上限（`parseLine` が名前として拾う長さと揃える） */
 const MAX_NAME_LEN = 24
@@ -105,15 +105,17 @@ export function normalizeKickoff(raw: unknown, premise: string): KickoffDraft | 
   // 中心人物が居ないものは素材にならない（`focusCharacterId` 未選択＝開始できない）
   if (characters.length < MIN_CHARACTERS) return null
 
+  // 起案のロアは**キーワード発火だけ**（常時注入は物語の向きを狭める。決定記録 §14）。
+  // ゆえに keys が空の項目はどこからも注入されない＝死んだロアになるので、ここで落とす
   const entries: LoreEntry[] = (Array.isArray(w.entries) ? w.entries : [])
     .map((item) => record(item))
-    .filter((e): e is Record<string, unknown> => !!e && !!text(e.content))
+    .filter((e): e is Record<string, unknown> => !!e && !!text(e.content) && list(e.keys).length > 0)
     .slice(0, MAX_ENTRIES)
     .map((e, i) => ({
       id: uid(),
       keys: list(e.keys),
       content: text(e.content),
-      alwaysOn: e.alwaysOn === true,
+      alwaysOn: false,
       enabled: true,
       order: i,
     }))

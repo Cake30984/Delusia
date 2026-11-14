@@ -205,7 +205,7 @@ export function buildSystemPrompt(session: Session, refs: ResolvedRefs): string 
     const s = session.story
     const sParts: string[] = []
     if (s.genre.trim()) sParts.push(`ジャンル・トーン: ${s.genre.trim()}`)
-    if (s.premise.trim()) sParts.push(`あらすじ・前提: ${s.premise.trim()}`)
+    // premise はここに置かない＝毎ターンの常設にしない（`premiseLead`。決定記録 §15）
     if (sParts.length) parts.push(`【物語設定】\n${sParts.join('\n')}`)
 
     // 4.5 最初の方向付け（FB5-②）: 最初のシーンに滞在している間だけ注入する非表示の指示。
@@ -525,8 +525,41 @@ export function buildMessages(
   const depth3 = depthThreeContent(session, refs)
   const withBridge = bridge.length ? [...bridge, ...history] : history
   const body = depth3 ? insertAtDepth(withBridge, INJECT_DEPTH, depth3) : withBridge
+  // 発端は深さ注入の後に先頭へ置く＝常に system の直後（文面も固定）でキャッシュの接頭辞を崩さない
+  const lead = premiseLead(session, win, refs.currentSceneId)
+  const head = lead ? [system, lead] : [system]
   const depth0 = depthZeroContent(session, refs, activeCharacter)
-  return depth0 ? [system, ...body, { role: 'user', content: depth0 }] : [system, ...body]
+  return depth0 ? [...head, ...body, { role: 'user', content: depth0 }] : [...head, ...body]
+}
+
+/**
+ * 物語の発端（`story.premise`）を、**最初のシーンの本文の前に置く読者には見えない前置き**として返す。
+ *
+ * system の常設にしない理由（決定記録 §15）: 発端は「始まった時点の話」で、話が進むと古くなる。
+ * 毎ターン「物語の設定」として入れ続けると、状況が変わった後も前提として読まれ続ける。
+ * ここでは導入文と同じ扱いにする——**最初のシーンが原文の窓に入っている間だけ**送り、
+ * 窓から外れたら導入文と一緒に消える。その後は最初のシーンの要約が引き継ぐ
+ * （最初のシーンのレビューにだけ発端を渡して、要約へ溶け込ませる。store の `prepareSceneReview`）。
+ * 保存はしない＝設定で発端を直せば、次の送信からそのまま効く。
+ */
+function premiseLead(
+  session: Session,
+  win: { ids: Set<string> } | null,
+  currentSceneId: string | null,
+): ChatMessage | null {
+  if (session.mode !== 'story') return null
+  const premise = session.story.premise.trim()
+  if (!premise) return null
+  const first = session.scenes[0]?.id
+  // シーンが1つも無い＝まだ始まっていない（最初の本文を書く前）。発端が要る
+  const inWindow = !first || (win ? win.ids.has(first) : !currentSceneId || currentSceneId === first)
+  if (!inWindow) return null
+  return { role: 'user', content: premiseLeadText(premise) }
+}
+
+/** 発端の前置きの枠。**文面は固定**（変えると先頭のキャッシュが切れる） */
+export function premiseLeadText(premise: string): string {
+  return `【物語の発端】（読者には見えない前置き。物語はここから始まる。本文に書き写さない）\n${premise}`
 }
 
 /**
@@ -1096,28 +1129,29 @@ export function characterDraftContextUser(args: {
 export function storyKickoffSystem(): string {
   return (
     `あなたは物語の初期設定を起案するアシスタントです。利用者が書いた一行の前提から、` +
-    `世界観1つ・登場人物2〜4人・物語の導入を作ってください。出力は JSON のみ（説明・前置き・コードフェンス禁止）。\n` +
+    `世界観1つ・登場人物3〜5人・物語の導入を作ってください。出力は JSON のみ（説明・前置き・コードフェンス禁止）。\n` +
     `全体の指針:\n` +
     // 起案の後に人手で全部書き足すなら起案の意味がない（characterDraftSystem と同じ契約）
     `- **すべての項目を必ず埋める。空文字・空配列にしない。** 前提に書かれていないことは、` +
     `前提と矛盾しない範囲で自然に補って決める。\n` +
-    `- 文章はすべて日本語。**全年齢**の内容にする。\n` +
-    `- **実在の人物・学校・企業・作品を指さない。**地名・組織名は架空のものを作る。\n` +
+    // 表現の範囲は利用者の一行に任せる（全年齢・架空名の縛りは置かない。決定記録 §14）
+    `- 文章はすべて日本語。\n` +
     `- 事件の解決や結末を先に書かない。ここで作るのは「始まりの一場面」まで。\n` +
     `\n【world】\n` +
-    `- name は世界観の名前（短い固有名詞句）。description はこの世界の常時設定を3〜5文で` +
-    `（舞台・時代・空気・何が起きている話なのか）。\n` +
-    `- entries は**5件以内**の設定項目。keys はその設定を呼び出す日本語のキーワードを2〜5語。` +
-    `content は2〜4文。物語の骨組み（締切・掟・失われかけているもの）にあたる1件だけ alwaysOn を true にし、` +
-    `残りは false にする。\n` +
+    // description は毎ターン system に入る。時点に縛られる情報は premise／opening／initialDirective へ
+    `- name は世界観の名前（短い固有名詞句）。description はこの世界の常時設定を5〜10文で` +
+    `（舞台・時代・空気・世界の仕組み）。物語で必ず活かしたい設定は、その語を description の中で使う。\n` +
+    `- entries は**5件以内**の設定項目。**物語を通して変わらない事実だけ**を、1件に1つの事柄として書く。` +
+    `時間とともに変わりうる状態・出来事・経緯は書かない（それは premise・opening・initialDirective に書く）。` +
+    `keys はその設定を呼び出す語を1〜5語（description や本文に出てくる語にする）。content は2〜4文。\n` +
     `- relationAspects は**ちょうど2つ**。中心人物と他の登場人物の関係を書き留める観点` +
-    `（例: 信頼／距離／負い目）。name は2〜4文字、guidance は「何を見て書くか」を1〜2文で。\n` +
+    `（例: 信頼／距離／負い目）。name は一語、guidance は「何を見て書くか」を1〜2文で。\n` +
     `- calendarFormat は作中の日付の書き方の見本を1行（例:「◯月◯日／朝・昼・放課後・夜」）。\n` +
     `\n【world.startPreset】\n` +
-    `- genre はジャンルとトーンを短く（例:「現代・学園／静かな青春」）。premise は前提を2〜4文にふくらませたあらすじ。\n` +
+    `- genre はジャンルとトーンを短く（例:「現代・学園／静かな青春」）。` +
+    `premise は物語の発端を2〜4文で（物語が始まる時点の状況と、そこに至る経緯。最初の場面の前に置かれる前置きになる）。\n` +
     `- opening は**物語の最初の本文そのもの**（そのまま画面に載る。8〜16行）。` +
-    `Web 小説の書き方で、セリフは鉤括弧「」で1発話1行、誰のセリフかは前後の地の文で分かるようにする。` +
-    `行頭に「@名前」「名前：」のような話者ラベルを付けない。\n` +
+    `Web 小説の書き方で、セリフは鉤括弧「」で1発話1行、誰のセリフかは前後の地の文で分かるようにする。\n` +
     `- **opening で人物を呼ぶときは、characters で作った名前をそのまま使う**（別名・愛称・敬称を付けない）。\n` +
     `- opening は中心人物の視点で始め、**最後の行を次の一手が要る場所で止める**（問いかけ・誘い・差し出された手）。\n` +
     `- openingTitle は導入の見出し（10文字前後）。openingSceneNote は最初の場面の状況メモ` +
@@ -1126,18 +1160,17 @@ export function storyKickoffSystem(): string {
     `「このシーンで何を見せ、何をまだ見せないか」を書く。結末や答えは書かない。\n` +
     `- startNow は開始時点の日時を calendarFormat の書き方で1行（例:「5月13日 放課後」）。\n` +
     `\n【characters】\n` +
-    `- **2〜4人。先頭が中心人物（読者が寄り添う視点人物）**。残りはその人物と関わる相手。\n` +
+    `- **3〜5人。先頭が中心人物（読者が寄り添う視点人物）**。残りはその人物と関わる相手。\n` +
     // P3 の罠: 前方一致の名前解決は空白込みの名前を解決できない
     `- name は**空白を入れない**表記（「七海 すず」ではなく「七海すず」）。敬称・役職を付けない。\n` +
-    // 素材は別の物語へ持ち出して再利用される（characterDraftSystem と同じ理由）
-    `- **persona・speechStyle・appearance に他の登場人物の名前を書かない。** ` +
-    `関係ではなく、その人物単体の性質として書く（「初対面の相手にどう接するか」のように）。\n` +
+    // 素材は別の物語へ持ち出して再利用される（characterDraftSystem と同じ理由）。縛るのは固有名詞だけ
+    `- **persona・speechStyle・appearance に固有名詞（他の登場人物の名前・地名・組織名）を書かない。**\n` +
     `- persona は価値観・生い立ち・動機・行動原理を4〜6文で。speechStyle は一人称・二人称・語尾・` +
     `敬語の有無・口調の癖を具体的に。\n` +
     `- appearance は**自然な日本語の描写文**で2〜4文（髪・目・体格・服装・雰囲気）。` +
     `カンマ区切りの英語タグにしない。\n` +
     `- exampleDialogues は**5個以上**。1要素＝1セリフで鉤括弧「」で囲み、場面の異なるものを混ぜる。` +
-    `**セリフの中に他の登場人物名を入れない。**\n` +
+    `**セリフの中に固有名詞を入れない。**\n` +
     `- greeting は初対面で発する短いセリフ1つ（鉤括弧つき）。tags は短い語を3〜6個` +
     `（人物の属性・役どころ。例: 寡黙, 転校生, 部長）。`
   )

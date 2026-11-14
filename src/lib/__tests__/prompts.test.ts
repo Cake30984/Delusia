@@ -5,6 +5,7 @@ import {
   CONTINUE_PROMPT,
   DIRECTIVE_HEADER,
   isStoryText,
+  premiseLeadText,
   selectRawScenes,
 } from '../prompts'
 import { RAW_WINDOW_BRIDGE_TOKENS } from '../tokens'
@@ -172,6 +173,64 @@ describe('buildMessages', () => {
     const contents = buildMessages(session, makeRefs({ currentSceneId: 's2' })).map((m) => m.content)
     expect(contents).toContain('橋になる本文')
     expect(contents.indexOf('橋になる本文')).toBeLessThan(contents.indexOf('窓の中'))
+  })
+})
+
+describe('物語の発端（premise）', () => {
+  const premise = '灯台が来年で消える町に、一人の若者が戻ってくる。'
+  const story = { premise, genre: '現代・港町', opening: '', openingTitle: '' }
+  const lead = premiseLeadText(premise)
+
+  it('system の常設にはしない（ジャンルは残る）', () => {
+    const out = buildSystemPrompt(makeSession({ story }), makeRefs())
+    expect(out).not.toContain(premise)
+    expect(out).toContain('ジャンル・トーン: 現代・港町')
+  })
+
+  it('最初のシーンの間は system の直後に前置きとして置く（深さ3がクランプされても先頭のまま）', () => {
+    const session = makeSession({
+      story,
+      authorNote: '雨の描写を多めに',
+      scenes: [makeScene({ id: 's1' })],
+      currentSceneId: 's1',
+      messages: [makeMessage({ sceneId: 's1', content: '導入文' })],
+    })
+    const out = buildMessages(session, makeRefs({ currentSceneId: 's1' }))
+    expect(out[1]).toEqual({ role: 'user', content: lead })
+    expect(out[2].content).toContain('【常に踏まえる重要事項】')
+    expect(out[3].content).toBe('導入文')
+  })
+
+  it('シーンが1つも無い（最初の本文を書く前）でも置く', () => {
+    const out = buildMessages(makeSession({ story }), makeRefs())
+    expect(out[1].content).toBe(lead)
+  })
+
+  it('最初のシーンが原文の窓に入っていれば、後のシーンでも置く', () => {
+    const session = makeSession({
+      story,
+      scenes: [makeScene({ id: 's0' }), makeScene({ id: 's1' })],
+      currentSceneId: 's1',
+      rawWindowFromSceneId: 's0',
+      messages: [makeMessage({ id: 'a', sceneId: 's0', content: '導入文' })],
+    })
+    expect(buildMessages(session, makeRefs({ currentSceneId: 's1' }))[1].content).toBe(lead)
+  })
+
+  it('最初のシーンが窓から外れたら、導入文と一緒に消える', () => {
+    const scenes = [makeScene({ id: 's0' }), makeScene({ id: 's1' }), makeScene({ id: 's2' })]
+    const folded = makeSession({ story, scenes, currentSceneId: 's2', rawWindowFromSceneId: 's1' })
+    expect(buildMessages(folded, makeRefs({ currentSceneId: 's2' })).map((m) => m.content)).not.toContain(lead)
+    // 窓が未確定（＝現在シーンのみ）で、現在が最初のシーンでないときも置かない
+    const unset = makeSession({ story, scenes, currentSceneId: 's2' })
+    expect(buildMessages(unset, makeRefs({ currentSceneId: 's2' })).map((m) => m.content)).not.toContain(lead)
+  })
+
+  it('ロールプレイ・発端が空なら置かない', () => {
+    const has = (out: ReturnType<typeof buildMessages>) =>
+      out.some((m) => typeof m.content === 'string' && m.content.startsWith('【物語の発端】'))
+    expect(has(buildMessages(makeSession({ story, mode: 'roleplay' }), makeRefs()))).toBe(false)
+    expect(has(buildMessages(makeSession({ story: { ...story, premise: '  ' } }), makeRefs()))).toBe(false)
   })
 })
 

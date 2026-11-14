@@ -2902,6 +2902,14 @@ export const useStore = create<AppState>()(
             if (castDefs) ctxParts.push(`【登場人物の現行設定】\n${castDefs}`)
             if (refs.world) ctxParts.push(`【世界観】${refs.world.name}: ${refs.world.description}`)
             if (refs.timelineInfo) ctxParts.push(`【時間】${refs.timelineInfo}`)
+            // 発端は本編では最初のシーンの前置きとしてしか送らない（`premiseLead`）。窓から外れると消えるので、
+            // 最初のシーンの要約にだけ溶け込ませて引き継ぐ（決定記録 §15）
+            const premise = s.mode === 'story' ? s.story.premise.trim() : ''
+            if (premise && s.scenes[0]?.id === scene.id) {
+              ctxParts.push(
+                `【物語の発端】${premise}\n（このシーンの前に置かれた前置き。要約には、この先の物語に必要な部分も含める）`,
+              )
+            }
 
             // 次シーンの時刻は第3の呼び出し（tracker）が決めるので、ここでは指示しない
 

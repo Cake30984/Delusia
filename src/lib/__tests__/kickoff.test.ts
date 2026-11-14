@@ -15,8 +15,8 @@ const good = {
     description: '北の岬にある小さな港町。灯台守が一人だけ残っている。',
     calendarFormat: '◯月◯日／朝・昼・夜',
     entries: [
-      { keys: ['灯台', '光'], content: '灯台は町で最後の一基。', alwaysOn: true },
-      { keys: ['港'], content: '港には船が三隻しか残っていない。', alwaysOn: false },
+      { keys: ['灯台', '光'], content: '灯台は町で最後の一基。' },
+      { keys: ['港'], content: '港には船が三隻しか残っていない。' },
     ],
     relationAspects: [
       { name: '信頼', guidance: '相手の言葉のどこを信じているか。' },
@@ -116,7 +116,6 @@ describe('normalizeKickoff', () => {
     expect(d.world.name).toBe('灯台守の冬')
     expect(d.title).toBe('灯台守の冬')
     expect(d.world.entries).toHaveLength(2)
-    expect(d.world.entries[0].alwaysOn).toBe(true)
     expect(d.world.entries.every((e) => e.enabled)).toBe(true)
     expect(d.world.entries.map((e) => e.order)).toEqual([0, 1])
     expect(d.world.relationAspects.map((a) => a.name)).toEqual(['信頼', '距離'])
@@ -135,7 +134,34 @@ describe('normalizeKickoff', () => {
     expect(matchCharacterByName('灯野みなと', d.characters)).toBe(d.characters[0].id)
   })
 
-  it('多すぎる起案は詰める（ロア5件・次元2つ・登場人物4人）', () => {
+  it('ロアは常時注入にしない（モデルが alwaysOn を返しても）。keys の無い項目は注入されないので落とす', () => {
+    const d = normalizeKickoff(
+      {
+        ...good,
+        world: {
+          ...good.world,
+          entries: [
+            { keys: ['灯台'], content: '灯台は町で最後の一基。', alwaysOn: true },
+            { keys: [], content: '鍵の無い設定。' },
+            { keys: ['  '], content: '空白だけの鍵。' },
+            { keys: '港\n突堤', content: '鍵が文字列で来た設定。' },
+          ],
+        },
+      },
+      '一行',
+    )!
+    expect(d.world.entries.map((e) => e.content)).toEqual(['灯台は町で最後の一基。', '鍵が文字列で来た設定。'])
+    expect(d.world.entries.every((e) => e.alwaysOn === false)).toBe(true)
+    expect(d.world.entries[1].keys).toEqual(['港', '突堤'])
+    expect(d.world.entries.map((e) => e.order)).toEqual([0, 1])
+  })
+
+  it('スキーマはロアの alwaysOn を聞かない', () => {
+    const entry = (KICKOFF_SCHEMA.schema as any).properties.world.properties.entries.items
+    expect(Object.keys(entry.properties)).toEqual(['keys', 'content'])
+  })
+
+  it('多すぎる起案は詰める（ロア5件・次元2つ・登場人物5人）', () => {
     const many = {
       world: {
         ...good.world,
@@ -147,7 +173,7 @@ describe('normalizeKickoff', () => {
     const d = normalizeKickoff(many, '一行')!
     expect(d.world.entries).toHaveLength(5)
     expect(d.world.relationAspects).toHaveLength(2)
-    expect(d.characters).toHaveLength(4)
+    expect(d.characters).toHaveLength(5)
     expect(d.characters[0].name).toBe('人物0')
   })
 
