@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { storeActions, useStore } from '../store'
-import { GEMINI_OPENAI_BASE_URL, isLocalEndpoint, makeModelRef, newProvider, requiresApiKey } from '../lib/providers'
+import { isLocalEndpoint, makeModelRef, newProvider, requiresApiKey } from '../lib/providers'
 import { oauthPkceMode } from '../lib/platform'
 import { openRouterOAuthAvailable, redirectToOpenRouterOAuth, startOpenRouterOAuth } from '../lib/oauthPkce'
 import { testProviderConnection, type ConnectionTestResult } from '../lib/openrouter'
@@ -8,70 +8,60 @@ import { RECOMMENDED_MODELS } from '../lib/recommendedModels'
 import { startKickoff, useIsMobile, useOverlays } from '../lib/nav'
 import type { Provider, ProviderKind } from '../types'
 import ModelPicker from './ModelPicker'
-import RecommendedModelList from './RecommendedModelList'
 import HelpDetails from './HelpDetails'
 
-type PathId = 'openrouter' | 'free' | 'local'
+type PathId = 'openrouter' | 'custom'
 
 interface PathDef {
   id: PathId
   label: string
-  /** カードの下の一行（課金・キーの要否・向いている人） */
+  /** カードの下の一行（費用・向いている人） */
   desc: string
+  /** カードに付ける目印（「おすすめ」） */
+  badge?: string
   presetLabel: string
   presetKind: ProviderKind
+  /** 空文字なら利用者が入れる */
   presetBaseUrl: string
-  /**
-   * 接続テストに使う既定モデル。空文字ならユーザーに選ばせる（ローカルは既知のモデル名が無い）。
-   * OpenRouter は推奨リストの先頭（`RECOMMENDED_MODELS`）。Gemini は無料枠で新規ユーザーに開放されている
-   * Flash 系のうち **1 日のリクエスト上限が多いもの**を選ぶ（2026-09 時点: `gemini-2.5-flash` は新規停止、
-   * `gemini-3.6-flash` は通るが 20 回/日で体験版として足りない、`gemini-3.5-flash-lite` は 300 回/日程度で品質も十分）。
-   */
+  /** 接続テストに使う既定モデル。空文字なら利用者が入れる（自分で用意した接続先は既知のモデル名が無い） */
   presetModel: string
   /** キーの取り方（提供元のキーの画面） */
   keyHelpUrl?: string
-  /** 気をつけること（入力の扱い・PC の要件） */
-  note?: string
 }
 
-const PATHS: PathDef[] = [
-  {
-    id: 'free',
-    label: '無料枠で始める',
-    desc: 'Gemini の無料枠を使う。Google のキーが要る',
-    presetLabel: 'Gemini（無料枠）',
+const OPENROUTER_PATH: PathDef = {
+  id: 'openrouter',
+  label: 'OpenRouter で始める',
+  desc: '利用には OpenRouter へのチャージが必要です。数ドルから始められます。',
+  badge: 'おすすめ',
+  presetLabel: 'OpenRouter',
+  presetKind: 'openrouter',
+  presetBaseUrl: 'https://openrouter.ai/api/v1',
+  presetModel: RECOMMENDED_MODELS[0].id,
+  keyHelpUrl: 'https://openrouter.ai/keys',
+}
+
+/**
+ * Ollama などのローカル LLM と、OpenRouter 以外の OpenAI 互換 API を1つにまとめた道。
+ * PC は Ollama の既定の URL を入れておく。モバイルはスマートフォンの中にサーバが無いので空にする
+ */
+function customPath(mobile: boolean): PathDef {
+  return {
+    id: 'custom',
+    label: 'ほかの接続先を使う',
+    desc: 'Ollama などでご自身で LLM を動かしている方や、OpenRouter 以外の接続先（OpenAI 互換の API）をお使いの方向け',
+    presetLabel: '自分で用意した接続先',
     presetKind: 'openai',
-    presetBaseUrl: GEMINI_OPENAI_BASE_URL,
-    presetModel: 'gemini-3.5-flash-lite',
-    keyHelpUrl: 'https://aistudio.google.com/apikey',
-    note: '無料枠では、入力が提供元の品質改善に使われることがあります。',
-  },
-  {
-    id: 'openrouter',
-    label: 'OpenRouter で接続',
-    desc: '従量課金。おすすめのモデルを選べる',
-    presetLabel: 'OpenRouter',
-    presetKind: 'openrouter',
-    presetBaseUrl: 'https://openrouter.ai/api/v1',
-    presetModel: RECOMMENDED_MODELS[0].id,
-    keyHelpUrl: 'https://openrouter.ai/keys',
-  },
-  {
-    id: 'local',
-    label: 'PC で動かす',
-    desc: 'Ollama などをこの PC で動かしている人向け',
-    presetLabel: 'ローカル接続先',
-    presetKind: 'openai',
-    presetBaseUrl: 'http://localhost:11434/v1',
+    presetBaseUrl: mobile ? '' : 'http://localhost:11434/v1',
     presetModel: '',
-    note: '外へは何も送りません。数 GB のダウンロードと、それなりの PC の性能が要ります。',
-  },
-]
+  }
+}
 
 /**
  * はじめての起動（P9 段8。R5 の初回ウィザードを1枚のページにした）。
- * 1. 書き手を選ぶ（無料枠・OpenRouter・PC で動かす。モバイルは PC で動かすを出さない＝スマートフォンからは届かない）
- *    → キーを入れて「つながるか試す」。OpenRouter はブラウザ承認が使えればキーの貼りつけが要らない
+ * 1. 書き手を選ぶ（OpenRouter＝おすすめ・ほかの接続先＝ローカル LLM と OpenAI 互換の API）
+ *    → キーを入れて「つながるか試す」。OpenRouter はブラウザ承認が使えればキーの貼りつけが要らない。
+ *    **OpenRouter ではモデルを選ばせない**（おすすめの1件で始め、詳しい人だけ「変更」から選ぶ）
  * 2. 最初の物語を一行で（一行から始める＝起案）。サンプルの物語を読む・あとで、も選べる
  */
 export default function FirstRunWizard({
@@ -91,6 +81,7 @@ export default function FirstRunWizard({
 
   const [step, setStep] = useState<1 | 2>(1)
   const [pathId, setPathId] = useState<PathId | null>(null)
+  const paths = [OPENROUTER_PATH, customPath(mobile)]
   const [providerId, setProviderId] = useState<string | null>(null)
   const [model, setModel] = useState('')
   const [showModelPicker, setShowModelPicker] = useState(false)
@@ -99,13 +90,12 @@ export default function FirstRunWizard({
   const [testResult, setTestResult] = useState<ConnectionTestResult | null>(null)
   const [premise, setPremise] = useState('')
 
-  const path = PATHS.find((p) => p.id === pathId) ?? null
+  const path = paths.find((p) => p.id === pathId) ?? null
   const provider = providers.find((p) => p.id === providerId) ?? null
   const isOpenRouterPath = path?.id === 'openrouter'
   const isOAuthPath = isOpenRouterPath && openRouterOAuthAvailable()
   // Web は承認のためにページごと離れる。押した後この画面は消えるので文言を変える（P5）
   const oauthLeavesPage = oauthPkceMode() === 'redirect'
-  const paths = mobile ? PATHS.filter((p) => p.id !== 'local') : PATHS
   const connected = testResult?.ok === true
 
   const choosePath = (def: PathDef) => {
@@ -117,8 +107,10 @@ export default function FirstRunWizard({
       const existing = providers.find((p) => p.kind === 'openrouter')
       draft = existing ?? { ...newProvider(), id: 'openrouter', kind: 'openrouter', label: def.presetLabel, baseUrl: def.presetBaseUrl }
     } else {
-      // 同じ道を選び直したときに接続先を増やさない（同じ Base URL の接続先を使い回す）
-      const existing = providers.find((p) => p.kind === def.presetKind && p.baseUrl === def.presetBaseUrl)
+      // 同じ道を選び直したときに接続先を増やさない（同じ名前・Base URL の接続先を使い回す。Base URL を書き換えた後でも名前で拾う）
+      const existing =
+        providers.find((p) => p.kind === def.presetKind && p.label === def.presetLabel) ??
+        (def.presetBaseUrl ? providers.find((p) => p.kind === def.presetKind && p.baseUrl === def.presetBaseUrl) : undefined)
       draft = existing ?? { ...newProvider(), label: def.presetLabel, kind: def.presetKind, baseUrl: def.presetBaseUrl }
     }
     upsertProvider(draft)
@@ -176,7 +168,7 @@ export default function FirstRunWizard({
   useEffect(() => {
     if (!oauthReturnKey || oauthReturnHandled.current) return
     oauthReturnHandled.current = true
-    const def = PATHS.find((p) => p.id === 'openrouter')!
+    const def = OPENROUTER_PATH
     const target = providers.find((p) => p.kind === 'openrouter')
     if (!target) return
     const returnModel = oauthReturnModel?.trim() || def.presetModel
@@ -187,6 +179,15 @@ export default function FirstRunWizard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [oauthReturnKey])
 
+  // 開いた時点で OpenRouter（おすすめ）を選んでおく。技術に詳しくない人はそのまま承認へ進めばよい。
+  // 承認から戻ってきた場合は上の処理が選ぶので触らない
+  useEffect(() => {
+    if (oauthReturnKey || pathId) return
+    choosePath(OPENROUTER_PATH)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const recommended = RECOMMENDED_MODELS.find((m) => m.id === model)
   const needsKey = !!provider && requiresApiKey(provider)
   const hasKey = !!provider?.apiKey.trim()
   const canTest = !!provider && !testing && !oauthBusy && !!model.trim() && (!needsKey || hasKey)
@@ -254,8 +255,8 @@ export default function FirstRunWizard({
               <h1 className="onb-title">AI が物語を書き、あなたが読んで導きます</h1>
               <p className="onb-lead">
                 {mobile
-                  ? '物語を書く AI をどこから呼ぶかを選んでください。'
-                  : 'まず、物語を書く AI をどこから呼ぶかを選んでください。あとから「表示と設定」で変えられます。'}
+                  ? '物語を書く AI の接続先を選んでください。'
+                  : 'まず、物語を書く AI の接続先を選んでください。迷ったら OpenRouter のままお進みください。あとから「表示と設定」で変更できます。'}
               </p>
             </div>
 
@@ -268,29 +269,34 @@ export default function FirstRunWizard({
                   className={'onb-way' + (p.id === pathId ? ' on' : '')}
                   onClick={() => choosePath(p)}
                 >
-                  {p.label}
-                  <small>
-                    {p.id === 'openrouter' && openRouterOAuthAvailable()
-                      ? '従量課金。ブラウザで承認するだけ。おすすめのモデルを選べる'
-                      : p.desc}
-                  </small>
+                  <span className="onb-way-name">
+                    {p.label}
+                    {p.badge && <span className="onb-badge">{p.badge}</span>}
+                  </span>
+                  <small>{p.desc}</small>
                 </button>
               ))}
             </div>
 
             {path && provider && (
               <div className="onb-form">
-                {path.note && <p className="set-desc">{path.note}</p>}
-
-                {path.id === 'local' && (
-                  <label className="set-label">
-                    Base URL
-                    <input
-                      className="set-input"
-                      value={provider.baseUrl}
-                      onChange={(e) => updateProvider({ baseUrl: e.target.value })}
-                    />
-                  </label>
+                {path.id === 'custom' && (
+                  <>
+                    <label className="set-label">
+                      接続先の URL（Base URL）
+                      <input
+                        className="set-input"
+                        placeholder="http://localhost:11434/v1 や https://api.example.com/v1"
+                        value={provider.baseUrl}
+                        onChange={(e) => updateProvider({ baseUrl: e.target.value })}
+                      />
+                    </label>
+                    <p className="set-desc">
+                      {isLocalEndpoint(provider.baseUrl)
+                        ? 'この PC（または家のネットワーク）の中で動かします。外へは何も送りません。API キーは要りません。'
+                        : 'OpenAI 互換の API（/chat/completions に対応したもの）なら使えます。接続先の API キーを入れてください。'}
+                    </p>
+                  </>
                 )}
                 {/* P5: ブラウザ版はページとローカルサーバの間に CORS があるので、サーバ側の設定が要る */}
                 {oauthLeavesPage && isLocalEndpoint(provider.baseUrl) && <LocalCorsHelp />}
@@ -298,8 +304,8 @@ export default function FirstRunWizard({
                 {isOAuthPath ? (
                   <p className="set-desc">
                     {oauthLeavesPage
-                      ? 'OpenRouter の承認の画面へ移ります。「Allow」を選ぶとこのページに戻り、選んだモデルでつながるか試します。'
-                      : 'ブラウザで OpenRouter の承認の画面が開きます。「Allow」を選ぶとこのアプリに戻り、選んだモデルでつながるか試します。'}
+                      ? 'OpenRouter の承認画面へ移動します。「Allow」を選ぶとこのページに戻り、つながるかを確認します。'
+                      : 'ブラウザで OpenRouter の承認画面が開きます。「Allow」を選ぶとこのアプリに戻り、つながるかを確認します。'}
                   </p>
                 ) : (
                   needsKey && (
@@ -331,24 +337,25 @@ export default function FirstRunWizard({
                   )
                 )}
 
-                <div>
-                  <label className="set-label">モデル</label>
-                  {isOpenRouterPath ? (
-                    <RecommendedModelList
-                      provider={provider}
-                      value={model}
-                      onChange={(m) => {
-                        setModel(m)
-                        setTestResult(null)
-                      }}
-                      onOpenPicker={() => setShowModelPicker(true)}
-                    />
-                  ) : (
+                {isOpenRouterPath ? (
+                  <div className="onb-model">
+                    <div className="onb-model-row">
+                      <span className="onb-model-key">モデル</span>
+                      <span className="onb-model-name">{recommended?.name ?? model}</span>
+                      <button className="nm-link onb-model-change" onClick={() => setShowModelPicker(true)}>
+                        変更する
+                      </button>
+                    </div>
+                    <p className="set-desc">モデルはあとから「表示と設定」でも変更できます。</p>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="set-label">モデル</label>
                     <div className="set-input-row">
                       <input
                         className="set-input"
                         aria-label="モデル"
-                        placeholder={path.id === 'local' ? 'llama3.1 など' : 'gemini-3.5-flash-lite など'}
+                        placeholder={isLocalEndpoint(provider.baseUrl) ? 'llama3.1 など' : 'モデル名（例: deepseek-chat）'}
                         value={model}
                         onChange={(e) => {
                           setModel(e.target.value)
@@ -359,8 +366,8 @@ export default function FirstRunWizard({
                         一覧から選ぶ
                       </button>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 {testResult && <TestResultBox result={testResult} retryHint={isOpenRouterPath} />}
                 {isOAuthPath && hasKey && !connected && (
@@ -480,7 +487,7 @@ function TestResultBox({ result, retryHint = false }: { result: ConnectionTestRe
       {retryHint && (result.kind === 'invalid_model' || result.kind === 'content_filter' || result.kind === 'unknown') && (
         <>
           <br />
-          ほかのおすすめのモデルを選んで、もう一度試してください。
+          「変更する」から別のモデルを選んで、もう一度お試しください。
         </>
       )}
     </p>

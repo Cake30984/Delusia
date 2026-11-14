@@ -812,10 +812,51 @@ textarea.set-input {
   margin-top: 8px;
   font-size: var(--fs-14);
 }
+/* 1枚目（OpenRouter・おすすめ）を広く、2枚目（ほかの接続先）を狭く */
 .onb-ways {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
   gap: 14px;
+}
+.onb-way-name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.onb-badge {
+  padding: 2px 10px;
+  border-radius: var(--r-pill);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: var(--fs-12);
+  font-weight: 700;
+}
+.onb-model {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.onb-model-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--r-card-lg);
+  background: var(--tint);
+  font-size: var(--fs-14);
+}
+.onb-model-key {
+  color: var(--sub);
+}
+.onb-model-name {
+  font-weight: 700;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.onb-model-change {
+  margin-left: auto;
+  flex: none;
 }
 .onb-page.mobile .onb-ways {
   grid-template-columns: minmax(0, 1fr);
